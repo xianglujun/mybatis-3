@@ -128,7 +128,11 @@ public class Configuration {
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
   protected boolean lazyLoadingEnabled = false;
-  protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
+
+  /**
+   * #224 Using internal Javassist instead of OGNL
+   */
+  protected ProxyFactory proxyFactory = new JavassistProxyFactory();
 
   protected String databaseId;
   /**
