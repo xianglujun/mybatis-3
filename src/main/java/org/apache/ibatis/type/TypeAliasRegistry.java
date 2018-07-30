@@ -33,7 +33,7 @@ import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.io.Resources;
 
 /**
- * 类型别名注册
+ * 类型别名注册, 用于部分类型与别名之间的映射关系
  *
  * @author Clinton Begin
  */
@@ -128,6 +128,12 @@ public class TypeAliasRegistry {
         registerAliases(packageName, Object.class);
     }
 
+    /**
+     * 通过{@code packageName} 获取下面所有的子类，并且通过{@link Class#isAssignableFrom(Class)}判断是否
+     * 为指定类型的子类
+     * @param packageName 需要便利的包名
+     * @param superType 需要查询找的类必须为该类型的子类
+     */
     public void registerAliases(String packageName, Class<?> superType) {
         ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<Class<?>>();
         resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
@@ -141,6 +147,10 @@ public class TypeAliasRegistry {
         }
     }
 
+    /**
+     * 注册类型，根据类型的{@link Class#getSimpleName()}注册
+     * @param type 需要注册的类
+     */
     public void registerAlias(Class<?> type) {
         String alias = type.getSimpleName();
         Alias aliasAnnotation = type.getAnnotation(Alias.class);
