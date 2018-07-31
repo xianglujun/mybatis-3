@@ -113,6 +113,7 @@ public class XMLConfigBuilder extends BaseBuilder {
             // 加载<typeAliases>的配置信息
             typeAliasesElement(root.evalNode("typeAliases"));
             pluginElement(root.evalNode("plugins"));
+            // 解析并设置objectFactory节点
             objectFactoryElement(root.evalNode("objectFactory"));
             objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
             reflectorFactoryElement(root.evalNode("reflectorFactory"));
@@ -130,6 +131,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     /**
      * &lt;settings&gt;配置， 这是mybatis种极为重要的调整配置，他们会改变MyBatis的运行时行为
+     *
      * @param context
      * @return
      */
@@ -151,6 +153,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     /**
      * 加载用户自定义的VFS的实现, 该配置会覆盖掉已经设置的vfsImpl的类，但是会在{@link VFS#USER_IMPLEMENTATIONS}中进行记录
+     *
      * @param props Settings的配置项
      * @throws ClassNotFoundException 当配置的VFS实现类加载失败时，抛出类未找到异常
      */
@@ -170,6 +173,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     /**
      * 类型别名是为Java类型设置一个短的名字。它只和XML配置有关，存在的意义仅仅在与用来减少完全限定名的冗余
+     *
      * @param parent
      */
     private void typeAliasesElement(XNode parent) {
@@ -212,6 +216,12 @@ public class XMLConfigBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 解析&lt;objectFactory&gt;标签
+     *
+     * @param context
+     * @throws Exception
+     */
     private void objectFactoryElement(XNode context) throws Exception {
         if (context != null) {
             String type = context.getStringAttribute("type");
@@ -241,6 +251,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     /**
      * 解析&lt;properties&gt;&lt;/properties&gt;的XML节点，该节点中配置的属性，可以在全局动态配置中，通过OGNL表达式
      * 来获取&lt;properties&gt;&lt;/properties&gt;节点中的属性
+     *
      * @param context
      * @throws Exception
      */
@@ -366,6 +377,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
     /**
      * 处理typeHandler的相关配置
+     *
      * @param parent &lt;typeHandler&gt;节点信息
      * @throws Exception
      */
