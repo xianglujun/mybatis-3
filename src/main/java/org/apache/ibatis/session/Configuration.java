@@ -96,6 +96,9 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class Configuration {
 
+    /**
+     * 环境参数变量，通过&lt;environments&gt;标签进行配置
+     */
     protected Environment environment;
 
     /**
@@ -218,6 +221,9 @@ public class Configuration {
      */
     protected ProxyFactory proxyFactory = new JavassistProxyFactory();
 
+    /**
+     * 数据库ID，通过{@link org.apache.ibatis.mapping.DatabaseIdProvider} 进行匹配和获取
+     */
     protected String databaseId;
     /**
      * Configuration factory class.
@@ -229,7 +235,13 @@ public class Configuration {
      */
     protected Class<?> configurationFactory;
 
+    /**
+     * mapper注册机，用于注册mapper的配置信息
+     */
     protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+    /**
+     * Mybatis plugin集成列表
+     */
     protected final InterceptorChain interceptorChain = new InterceptorChain();
     protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
     protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
