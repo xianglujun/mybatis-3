@@ -471,6 +471,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     private void mapperElement(XNode parent) throws Exception {
         if (parent != null) {
             for (XNode child : parent.getChildren()) {
+                // 遍历package下的所有mapper对象，并增加到Configuration之中
                 if ("package".equals(child.getName())) {
                     String mapperPackage = child.getStringAttribute("name");
                     configuration.addMappers(mapperPackage);

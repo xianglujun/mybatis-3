@@ -55,12 +55,28 @@ public class MapperRegistry {
         }
     }
 
+    /**
+     * 判断当前的类型是否已经被注册
+     *
+     * @param type
+     * @param <T>
+     * @return
+     */
     public <T> boolean hasMapper(Class<T> type) {
         return knownMappers.containsKey(type);
     }
 
+    /**
+     * 添加Mapper到列表之中, 该添加Mapper的类型中，可以明确看到
+     * 要求添加的Mapper的{@link Class}必须为接口类型。
+     *
+     * @param type 捕获的{@link Class}对象
+     * @param <T>  泛型类型
+     */
     public <T> void addMapper(Class<T> type) {
+        // 判断是否定义的接口
         if (type.isInterface()) {
+            // 判断类型是否已经被注册
             if (hasMapper(type)) {
                 throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
             }
