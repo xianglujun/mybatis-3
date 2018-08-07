@@ -251,6 +251,10 @@ public class Configuration {
     protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
     protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
+
+    /**
+     * MyBatis缓存集合
+     */
     protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
     protected final Map<String, ResultMap> resultMaps = new StrictMap<ResultMap>("Result Maps collection");
     protected final Map<String, ParameterMap> parameterMaps = new StrictMap<ParameterMap>("Parameter Maps collection");
@@ -259,21 +263,32 @@ public class Configuration {
     /**
      * 加载资源列表:
      * <ul>
-     *     <li>1. Mapper资源信息</li>
+     * <li>1. Mapper资源信息</li>
+     * <li>2. namespace资源信息</li>
      * </ul>
      */
     protected final Set<String> loadedResources = new HashSet<String>();
+    /**
+     * SQL 片段
+     */
     protected final Map<String, XNode> sqlFragments = new StrictMap<XNode>("XML fragments parsed from previous mappers");
 
     protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<XMLStatementBuilder>();
+
+    /**
+     * Cache-Ref解释器列表，如果&lt;cache-ref&gt;中namespace的缓存并未在{@link Configuration#cacheRefMap}中完成映射，
+     * 则会将{@link CacheRefResolver}对象存放入当前列表
+     */
     protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<CacheRefResolver>();
     protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<ResultMapResolver>();
     protected final Collection<MethodResolver> incompleteMethods = new LinkedList<MethodResolver>();
 
-    /*
+    /**
      * A map holds cache-ref relationship. The key is the namespace that
      * references a cache bound to another namespace and the value is the
      * namespace which the actual cache is bound to.
+     * 一个用于持有cache-ref的关系映射。其中的key是需要绑定的命令空间，而value则是
+     * 实际被绑定的命名空间和实际被绑定的命名空间！
      */
     protected final Map<String, String> cacheRefMap = new HashMap<String, String>();
 
@@ -414,6 +429,12 @@ public class Configuration {
         loadedResources.add(resource);
     }
 
+    /**
+     * 判断资源是否已经被加载
+     *
+     * @param resource 资源路径
+     * @return
+     */
     public boolean isResourceLoaded(String resource) {
         return loadedResources.contains(resource);
     }
@@ -806,6 +827,10 @@ public class Configuration {
         return incompleteCacheRefs;
     }
 
+    /**
+     * 添加为完成Cache-ref列表
+     * @param incompleteCacheRef CacheRef解释器
+     */
     public void addIncompleteCacheRef(CacheRefResolver incompleteCacheRef) {
         incompleteCacheRefs.add(incompleteCacheRef);
     }
@@ -849,6 +874,11 @@ public class Configuration {
         mapperRegistry.addMappers(packageName, superType);
     }
 
+    /**
+     * 添加Mapper到Mapper注册器中
+     *
+     * @param packageName 扫描的包路径
+     */
     public void addMappers(String packageName) {
         mapperRegistry.addMappers(packageName);
     }
@@ -876,6 +906,12 @@ public class Configuration {
         return mappedStatements.containsKey(statementName);
     }
 
+    /**
+     * 添加cache-ref缓存信息
+     *
+     * @param namespace           命名空间
+     * @param referencedNamespace 只想的命名空间
+     */
     public void addCacheRef(String namespace, String referencedNamespace) {
         cacheRefMap.put(namespace, referencedNamespace);
     }

@@ -133,6 +133,7 @@ public class MapperAnnotationBuilder {
      */
     public void parse() {
         String resource = type.toString();
+        // 判断该类型是否已经被加载
         if (!configuration.isResourceLoaded(resource)) {
             loadXmlResource();
             configuration.addLoadedResource(resource);
@@ -169,6 +170,10 @@ public class MapperAnnotationBuilder {
         }
     }
 
+    /**
+     * 加载XML Resource资源，该方法会根据{@link Class} 的包名，在该包名下加载对应名称的XML文件，
+     * 并通过{@link XMLMapperBuilder}对XML文件进行解析
+     */
     private void loadXmlResource() {
         // Spring may not know the real resource name so we check a flag
         // to prevent loading again a resource twice
