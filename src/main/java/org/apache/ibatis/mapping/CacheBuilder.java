@@ -152,20 +152,30 @@ public class CacheBuilder {
         }
     }
 
+    /**
+     * 设置缓存侧率信息
+     * @param cache
+     * @return
+     */
     private Cache setStandardDecorators(Cache cache) {
         try {
             MetaObject metaCache = SystemMetaObject.forObject(cache);
             if (size != null && metaCache.hasSetter("size")) {
                 metaCache.setValue("size", size);
             }
+            // 设置清理缓存间隔时间，实际上交由ScheduledCache类进行处理
             if (clearInterval != null) {
                 cache = new ScheduledCache(cache);
                 ((ScheduledCache) cache).setClearInterval(clearInterval);
             }
+            // 设置是否可写的Cache,实际交由SerializedCache类型
             if (readWrite) {
                 cache = new SerializedCache(cache);
             }
+            // 日志缓存
             cache = new LoggingCache(cache);
+
+            // 同步缓存
             cache = new SynchronizedCache(cache);
             if (blocking) {
                 cache = new BlockingCache(cache);

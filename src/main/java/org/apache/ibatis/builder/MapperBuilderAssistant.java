@@ -175,6 +175,19 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return parameterMap;
     }
 
+    /**
+     * 构建{@link ParameterMapping}对象,用于存储每一个ParameterMap下的不同的Parameter
+     * @param parameterType
+     *
+     * @param property
+     * @param javaType
+     * @param jdbcType
+     * @param resultMap
+     * @param parameterMode
+     * @param typeHandler
+     * @param numericScale
+     * @return
+     */
     public ParameterMapping buildParameterMapping(
             Class<?> parameterType,
             String property,

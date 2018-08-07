@@ -155,6 +155,9 @@ public class XMLMapperBuilder extends BaseBuilder {
 
             // 加载cache节点信息
             cacheElement(context.evalNode("cache"));
+            /**
+             * 加载parameterMap节点
+             */
             parameterMapElement(context.evalNodes("/mapper/parameterMap"));
             resultMapElements(context.evalNodes("/mapper/resultMap"));
             sqlElement(context.evalNodes("/mapper/sql"));
@@ -306,24 +309,45 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 加载parameterMap节点
+     * @param list parameterMap节点列表
+     * @throws Exception
+     */
     private void parameterMapElement(List<XNode> list) throws Exception {
         for (XNode parameterMapNode : list) {
+            // 获取parameterMap 的id属性
             String id = parameterMapNode.getStringAttribute("id");
+            // 获取parameterMap 类型属性
             String type = parameterMapNode.getStringAttribute("type");
+            // 加载type的类型
             Class<?> parameterClass = resolveClass(type);
+            // 获取parameter节点列表
             List<XNode> parameterNodes = parameterMapNode.evalNodes("parameter");
             List<ParameterMapping> parameterMappings = new ArrayList<ParameterMapping>();
+            // 遍历所有的Parameter节点
             for (XNode parameterNode : parameterNodes) {
+                // 获取property属性
                 String property = parameterNode.getStringAttribute("property");
+                // 获取JAVA类型
                 String javaType = parameterNode.getStringAttribute("javaType");
+                // 获取jdbc类型
                 String jdbcType = parameterNode.getStringAttribute("jdbcType");
+                // 获取resultMap类型配置
                 String resultMap = parameterNode.getStringAttribute("resultMap");
+                // 获取模式
                 String mode = parameterNode.getStringAttribute("mode");
+                // 获取类型处理器
                 String typeHandler = parameterNode.getStringAttribute("typeHandler");
+                // 获取数字范围
                 Integer numericScale = parameterNode.getIntAttribute("numericScale");
+                // 解析mode参数, IN, OUT, INOUT
                 ParameterMode modeEnum = resolveParameterMode(mode);
+                // 加载并获取解析的类型
                 Class<?> javaTypeClass = resolveClass(javaType);
+                // 从JdbcType中获取jdbc类型
                 JdbcType jdbcTypeEnum = resolveJdbcType(jdbcType);
+                // 获取类型处理器，必须为TypeHandler子类
                 @SuppressWarnings("unchecked")
                 Class<? extends TypeHandler<?>> typeHandlerClass = (Class<? extends TypeHandler<?>>) resolveClass(typeHandler);
                 ParameterMapping parameterMapping = builderAssistant.buildParameterMapping(parameterClass, property, javaTypeClass, jdbcTypeEnum, resultMap, modeEnum, typeHandlerClass, numericScale);

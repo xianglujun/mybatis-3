@@ -70,6 +70,11 @@ public abstract class BaseBuilder {
         return new HashSet<String>(Arrays.asList(value.split(",")));
     }
 
+    /**
+     * 获取JDBC类型
+     * @param alias
+     * @return
+     */
     protected JdbcType resolveJdbcType(String alias) {
         if (alias == null) {
             return null;
@@ -92,6 +97,11 @@ public abstract class BaseBuilder {
         }
     }
 
+    /**
+     * 解析parameterMap节点中的，parameter的mode属性信息
+     * @param alias
+     * @return
+     */
     protected ParameterMode resolveParameterMode(String alias) {
         if (alias == null) {
             return null;
@@ -115,6 +125,11 @@ public abstract class BaseBuilder {
         }
     }
 
+    /**
+     * 加载
+     * @param alias
+     * @return
+     */
     protected Class<?> resolveClass(String alias) {
         if (alias == null) {
             return null;
