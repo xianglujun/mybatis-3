@@ -159,6 +159,9 @@ public class XMLMapperBuilder extends BaseBuilder {
              * 加载parameterMap节点
              */
             parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+            /**
+             * 解析resultMap节点
+             */
             resultMapElements(context.evalNodes("/mapper/resultMap"));
             sqlElement(context.evalNodes("/mapper/sql"));
             buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
@@ -357,6 +360,11 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 解析resultMap节点
+     * @param list resultMap节点列表
+     * @throws Exception
+     */
     private void resultMapElements(List<XNode> list) throws Exception {
         for (XNode resultMapNode : list) {
             try {
@@ -367,26 +375,56 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 单个节点映射列表
+     * @param resultMapNode resultMap节点对象
+     * @return {@link ResultMap} resultMap节点对象
+     * @throws Exception
+     */
     private ResultMap resultMapElement(XNode resultMapNode) throws Exception {
         return resultMapElement(resultMapNode, Collections.<ResultMapping>emptyList());
     }
 
+    /**
+     * resultMap节点解析
+     * @param resultMapNode resultMap节点
+     * @param additionalResultMappings
+     * @return {@link ResultMap} 结果映射对象
+     * @throws Exception
+     */
     private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings) throws Exception {
         ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
+        /**
+         * 获取该resultMap的id属性，如果id不存在，一次寻找 value/property属性
+         */
         String id = resultMapNode.getStringAttribute("id",
                 resultMapNode.getValueBasedIdentifier());
+        /**
+         * 获取该resultMap映射的java类型，通过获取type/ofType/resultType/javaType的殊勋进行确定
+         */
         String type = resultMapNode.getStringAttribute("type",
                 resultMapNode.getStringAttribute("ofType",
                         resultMapNode.getStringAttribute("resultType",
                                 resultMapNode.getStringAttribute("javaType"))));
+        /**
+         * 获取extends属性
+         */
         String extend = resultMapNode.getStringAttribute("extends");
+        /**
+         * 获取autoMapping属性
+         */
         Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
         Class<?> typeClass = resolveClass(type);
+
         Discriminator discriminator = null;
         List<ResultMapping> resultMappings = new ArrayList<ResultMapping>();
         resultMappings.addAll(additionalResultMappings);
+        /**
+         * 获取resultMap节点下的所有子节点
+         */
         List<XNode> resultChildren = resultMapNode.getChildren();
         for (XNode resultChild : resultChildren) {
+            // 获取并解析constructor节点
             if ("constructor".equals(resultChild.getName())) {
                 processConstructorElement(resultChild, typeClass, resultMappings);
             }
@@ -410,6 +448,13 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 执行类型constructor节点
+     * @param resultChild constructor节点对象
+     * @param resultType 需要解析的类型
+     * @param resultMappings 结果集映射列表
+     * @throws Exception
+     */
     private void processConstructorElement(XNode resultChild, Class<?> resultType, List<ResultMapping> resultMappings) throws Exception {
         List<XNode> argChildren = resultChild.getChildren();
         for (XNode argChild : argChildren) {
@@ -479,6 +524,14 @@ public class XMLMapperBuilder extends BaseBuilder {
         return true;
     }
 
+    /**
+     * 从resultMap子节点中获取相关配置
+     * @param context resultMapping 配置节点
+     * @param resultType 结果类型
+     * @param flags 类型
+     * @return {@link ResultMapping} 结果映射对象
+     * @throws Exception
+     */
     private ResultMapping buildResultMappingFromContext(XNode context, Class<?> resultType, List<ResultFlag> flags) throws Exception {
         String property;
         if (flags.contains(ResultFlag.CONSTRUCTOR)) {

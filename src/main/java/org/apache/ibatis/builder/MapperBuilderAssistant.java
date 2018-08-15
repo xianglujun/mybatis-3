@@ -88,6 +88,12 @@ public class MapperBuilderAssistant extends BaseBuilder {
         this.currentNamespace = currentNamespace;
     }
 
+    /**
+     * 解析命名空间
+     * @param base 命名空间
+     * @param isReference
+     * @return
+     */
     public String applyCurrentNamespace(String base, boolean isReference) {
         if (base == null) {
             return null;
