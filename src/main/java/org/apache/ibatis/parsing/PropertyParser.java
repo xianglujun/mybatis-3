@@ -1,97 +1,123 @@
 /**
- *    Copyright 2009-2016 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2016 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.parsing;
 
 import java.util.Properties;
 
 /**
+ * 属性解析器，用于解析对局部变量的使用情况，主要语法通过{@code ${}}的方式进行操作
+ *
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 public class PropertyParser {
 
-  private static final String KEY_PREFIX = "org.apache.ibatis.parsing.PropertyParser.";
-  /**
-   * The special property key that indicate whether enable a default value on placeholder.
-   * <p>
-   *   The default value is {@code false} (indicate disable a default value on placeholder)
-   *   If you specify the {@code true}, you can specify key and default value on placeholder (e.g. {@code ${db.username:postgres}}).
-   * </p>
-   * @since 3.4.2
-   */
-  public static final String KEY_ENABLE_DEFAULT_VALUE = KEY_PREFIX + "enable-default-value";
+    private static final String KEY_PREFIX = "org.apache.ibatis.parsing.PropertyParser.";
+    /**
+     * The special property key that indicate whether enable a default value on placeholder.
+     * <p>
+     * The default value is {@code false} (indicate disable a default value on placeholder)
+     * If you specify the {@code true}, you can specify key and default value on placeholder (e.g. {@code ${db.username:postgres}}).
+     * </p>
+     *
+     * @since 3.4.2
+     */
+    public static final String KEY_ENABLE_DEFAULT_VALUE = KEY_PREFIX + "enable-default-value";
 
-  /**
-   * The special property key that specify a separator for key and default value on placeholder.
-   * <p>
-   *   The default separator is {@code ":"}.
-   * </p>
-   * @since 3.4.2
-   */
-  public static final String KEY_DEFAULT_VALUE_SEPARATOR = KEY_PREFIX + "default-value-separator";
+    /**
+     * The special property key that specify a separator for key and default value on placeholder.
+     * <p>
+     * The default separator is {@code ":"}.
+     * </p>
+     *
+     * @since 3.4.2
+     */
+    public static final String KEY_DEFAULT_VALUE_SEPARATOR = KEY_PREFIX + "default-value-separator";
 
-  private static final String ENABLE_DEFAULT_VALUE = "false";
-  private static final String DEFAULT_VALUE_SEPARATOR = ":";
+    /**
+     * 是否启用默认值, 默认为false
+     */
+    private static final String ENABLE_DEFAULT_VALUE = "false";
+    /**
+     * 默认值的实现规则，默认为":"进行区分
+     */
+    private static final String DEFAULT_VALUE_SEPARATOR = ":";
 
-  private PropertyParser() {
-    // Prevent Instantiation
-  }
-
-  public static String parse(String string, Properties variables) {
-    VariableTokenHandler handler = new VariableTokenHandler(variables);
-    GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
-    return parser.parse(string);
-  }
-
-  private static class VariableTokenHandler implements TokenHandler {
-    private final Properties variables;
-    private final boolean enableDefaultValue;
-    private final String defaultValueSeparator;
-
-    private VariableTokenHandler(Properties variables) {
-      this.variables = variables;
-      this.enableDefaultValue = Boolean.parseBoolean(getPropertyValue(KEY_ENABLE_DEFAULT_VALUE, ENABLE_DEFAULT_VALUE));
-      this.defaultValueSeparator = getPropertyValue(KEY_DEFAULT_VALUE_SEPARATOR, DEFAULT_VALUE_SEPARATOR);
+    private PropertyParser() {
+        // Prevent Instantiation
     }
 
-    private String getPropertyValue(String key, String defaultValue) {
-      return (variables == null) ? defaultValue : variables.getProperty(key, defaultValue);
+    /**
+     * 进行局部变量解析操作
+     *
+     * @param string    需要解析的字符串
+     * @param variables 需要解析和操作的变量列表
+     * @return {@link String} 解析之后的字符串
+     */
+    public static String parse(String string, Properties variables) {
+        VariableTokenHandler handler = new VariableTokenHandler(variables);
+        GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
+        return parser.parse(string);
     }
 
-    @Override
-    public String handleToken(String content) {
-      if (variables != null) {
-        String key = content;
-        if (enableDefaultValue) {
-          final int separatorIndex = content.indexOf(defaultValueSeparator);
-          String defaultValue = null;
-          if (separatorIndex >= 0) {
-            key = content.substring(0, separatorIndex);
-            defaultValue = content.substring(separatorIndex + defaultValueSeparator.length());
-          }
-          if (defaultValue != null) {
-            return variables.getProperty(key, defaultValue);
-          }
+    /**
+     * 变量处理类
+     */
+    private static class VariableTokenHandler implements TokenHandler {
+        private final Properties variables;
+        private final boolean enableDefaultValue;
+        private final String defaultValueSeparator;
+
+        private VariableTokenHandler(Properties variables) {
+            this.variables = variables;
+            this.enableDefaultValue = Boolean.parseBoolean(getPropertyValue(KEY_ENABLE_DEFAULT_VALUE, ENABLE_DEFAULT_VALUE));
+            this.defaultValueSeparator = getPropertyValue(KEY_DEFAULT_VALUE_SEPARATOR, DEFAULT_VALUE_SEPARATOR);
         }
-        if (variables.containsKey(key)) {
-          return variables.getProperty(key);
+
+        /**
+         * 获取属性值，如果key不存在或者为配置，则返回默认值
+         * @param key 需要查询的key
+         * @param defaultValue 默认值
+         * @return
+         */
+        private String getPropertyValue(String key, String defaultValue) {
+            return (variables == null) ? defaultValue : variables.getProperty(key, defaultValue);
         }
-      }
-      return "${" + content + "}";
+
+        @Override
+        public String handleToken(String content) {
+            if (variables != null) {
+                String key = content;
+                if (enableDefaultValue) {
+                    final int separatorIndex = content.indexOf(defaultValueSeparator);
+                    String defaultValue = null;
+                    if (separatorIndex >= 0) {
+                        key = content.substring(0, separatorIndex);
+                        defaultValue = content.substring(separatorIndex + defaultValueSeparator.length());
+                    }
+                    if (defaultValue != null) {
+                        return variables.getProperty(key, defaultValue);
+                    }
+                }
+                if (variables.containsKey(key)) {
+                    return variables.getProperty(key);
+                }
+            }
+            return "${" + content + "}";
+        }
     }
-  }
 
 }

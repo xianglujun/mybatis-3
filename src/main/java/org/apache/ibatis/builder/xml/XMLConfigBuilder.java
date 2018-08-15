@@ -477,9 +477,14 @@ public class XMLConfigBuilder extends BaseBuilder {
                     configuration.addMappers(mapperPackage);
                 }
                 else {
+                    // 获取resource资源信息，配置xml文件信息
                     String resource = child.getStringAttribute("resource");
+                    // 获取配置文件url参数
                     String url = child.getStringAttribute("url");
+                    // 获取具体的Mapper对象
                     String mapperClass = child.getStringAttribute("class");
+                    // 如果一个mapper节点中配置了resource,url,class属性，会按照顺序读取，
+                    // 其他的属性配置会忽略
                     if (resource != null && url == null && mapperClass == null) {
                         ErrorContext.instance().resource(resource);
                         InputStream inputStream = Resources.getResourceAsStream(resource);

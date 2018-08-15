@@ -89,15 +89,17 @@ public class MapperBuilderAssistant extends BaseBuilder {
     }
 
     /**
-     * 解析命名空间
+     * 解析命名空间。应该是对命名空间名称的合法性进行验证
      * @param base 命名空间
-     * @param isReference
+     * @param isReference 是否引用
      * @return
      */
     public String applyCurrentNamespace(String base, boolean isReference) {
         if (base == null) {
             return null;
         }
+
+        // 如果isReference=true, 则base中的包含了"."则直接返回
         if (isReference) {
             // is it qualified with any namespace yet?
             if (base.contains(".")) {
@@ -106,9 +108,13 @@ public class MapperBuilderAssistant extends BaseBuilder {
         }
         else {
             // is it qualified with this namespace yet?
+            // 如果为false, 则需要判断是否为当前的namespace开头，
+            // 如果该条件成立，则直接返回当前的名称
             if (base.startsWith(currentNamespace + ".")) {
                 return base;
             }
+
+            // 如果名称之中包含了"."字符，则直接抛出异常
             if (base.contains(".")) {
                 throw new BuilderException("Dots are not allowed in element names, please remove it from " + base);
             }

@@ -425,6 +425,10 @@ public class Configuration {
         this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
     }
 
+    /**
+     * 新增已经加载的loader信息
+     * @param resource
+     */
     public void addLoadedResource(String resource) {
         loadedResources.add(resource);
     }
@@ -891,6 +895,11 @@ public class Configuration {
         return mapperRegistry.getMapper(type, sqlSession);
     }
 
+    /**
+     * 判断是否已经了对应的Mapper对象
+     * @param type 需要验证类型
+     * @return
+     */
     public boolean hasMapper(Class<?> type) {
         return mapperRegistry.hasMapper(type);
     }

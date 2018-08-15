@@ -41,6 +41,7 @@ public abstract class BaseBuilder {
 
     /**
      * 基础Builder类型，主要从Configuration提取类型别名注册器以及类型处理器等信息
+     *
      * @param configuration MyBatis配置信息
      */
     public BaseBuilder(Configuration configuration) {
@@ -72,6 +73,7 @@ public abstract class BaseBuilder {
 
     /**
      * 获取JDBC类型
+     *
      * @param alias
      * @return
      */
@@ -86,6 +88,11 @@ public abstract class BaseBuilder {
         }
     }
 
+    /**
+     * 主要通过配置，获取对应的语法类型的枚举对象
+     * @param alias 别名名称
+     * @return {@link ResultSetType}
+     */
     protected ResultSetType resolveResultSetType(String alias) {
         if (alias == null) {
             return null;
@@ -99,6 +106,7 @@ public abstract class BaseBuilder {
 
     /**
      * 解析parameterMap节点中的，parameter的mode属性信息
+     *
      * @param alias
      * @return
      */
@@ -127,6 +135,7 @@ public abstract class BaseBuilder {
 
     /**
      * 加载
+     *
      * @param alias
      * @return
      */

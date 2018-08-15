@@ -122,11 +122,15 @@ public class XMLMapperBuilder extends BaseBuilder {
         if (!configuration.isResourceLoaded(resource)) {
             configurationElement(parser.evalNode("/mapper"));
             configuration.addLoadedResource(resource);
+            // 绑定Mapper和命名空间之间的关系
             bindMapperForNamespace();
         }
 
+        // 解析未完成的配置信息
         parsePendingResultMaps();
+        // 解析未完成的缓存信息
         parsePendingCacheRefs();
+        // 解析未完成的表达式信息
         parsePendingStatements();
     }
 
@@ -135,7 +139,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
 
     /**
-     * 配置元素信息
+     * 配置元素信息, 该节点为Mapper文件的根节点信息，即&lt;mapper&gt;
      *
      * @param context 配置文件元素信息
      */
@@ -163,13 +167,26 @@ public class XMLMapperBuilder extends BaseBuilder {
              * 解析resultMap节点
              */
             resultMapElements(context.evalNodes("/mapper/resultMap"));
+
+            /**
+             * 加载所有的sql片段&lt;sql&gt;节点
+             */
             sqlElement(context.evalNodes("/mapper/sql"));
+
+            /**
+             * 记载所有的select,insert,update,delete操作信息
+             */
             buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
         } catch (Exception e) {
             throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
         }
     }
 
+    /**
+     * 解析所有的select, insert, update, delete的节点的语法信息
+     *
+     * @param list
+     */
     private void buildStatementFromContext(List<XNode> list) {
         if (configuration.getDatabaseId() != null) {
             buildStatementFromContext(list, configuration.getDatabaseId());
@@ -177,6 +194,11 @@ public class XMLMapperBuilder extends BaseBuilder {
         buildStatementFromContext(list, null);
     }
 
+    /**
+     * 构建所有的sql执行语句
+     * @param list 节点列表
+     * @param requiredDatabaseId 数据库ID
+     */
     private void buildStatementFromContext(List<XNode> list, String requiredDatabaseId) {
         for (XNode context : list) {
             final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
@@ -188,6 +210,9 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 解析未完成的ResultMap的配置信息
+     */
     private void parsePendingResultMaps() {
         Collection<ResultMapResolver> incompleteResultMaps = configuration.getIncompleteResultMaps();
         synchronized (incompleteResultMaps) {
@@ -203,6 +228,9 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 解析为完成的缓存信息
+     */
     private void parsePendingCacheRefs() {
         Collection<CacheRefResolver> incompleteCacheRefs = configuration.getIncompleteCacheRefs();
         synchronized (incompleteCacheRefs) {
@@ -218,6 +246,9 @@ public class XMLMapperBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 解析未完成的表达式信息
+     */
     private void parsePendingStatements() {
         Collection<XMLStatementBuilder> incompleteStatements = configuration.getIncompleteStatements();
         synchronized (incompleteStatements) {
@@ -249,6 +280,8 @@ public class XMLMapperBuilder extends BaseBuilder {
                 cacheRefResolver.resolveCacheRef();
             } catch (IncompleteElementException e) {
                 // 当依赖的namespace不存在缓存时，则将该缓存放入Configuration配置文件中
+                // 依赖的cache不存在，主要是因为在Configuration中为找到对应的Cache的缓存对象，
+                // 因此将当前的放入到未完成的Cache-Ref当中，方便后面使用
                 configuration.addIncompleteCacheRef(cacheRefResolver);
             }
         }
@@ -256,6 +289,11 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     /**
      * 加载cache节点信息, 对于MyBatis而言，cache默认为关闭状态，需要手工开启。除开默认Session中的缓存之外.
+     * <p>
+     * 当前的所有的cache项会最终配置到{@link Configuration#caches}之中, 然而在添加到{@link Configuration}
+     * 之中的时候，会获取{@link Cache#getId()}, 通过该出我们会发现，该属性默认存储了{@link MapperBuilderAssistant#currentNamespace}
+     * 字段进行设置.
+     * </p>
      *
      * @param context cache节点封装对象
      * @throws Exception
@@ -314,6 +352,7 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     /**
      * 加载parameterMap节点
+     *
      * @param list parameterMap节点列表
      * @throws Exception
      */
@@ -362,6 +401,7 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     /**
      * 解析resultMap节点
+     *
      * @param list resultMap节点列表
      * @throws Exception
      */
@@ -377,6 +417,7 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     /**
      * 单个节点映射列表
+     *
      * @param resultMapNode resultMap节点对象
      * @return {@link ResultMap} resultMap节点对象
      * @throws Exception
@@ -387,7 +428,8 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     /**
      * resultMap节点解析
-     * @param resultMapNode resultMap节点
+     *
+     * @param resultMapNode            resultMap节点
      * @param additionalResultMappings
      * @return {@link ResultMap} 结果映射对象
      * @throws Exception
@@ -450,8 +492,9 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     /**
      * 执行类型constructor节点
-     * @param resultChild constructor节点对象
-     * @param resultType 需要解析的类型
+     *
+     * @param resultChild    constructor节点对象
+     * @param resultType     需要解析的类型
      * @param resultMappings 结果集映射列表
      * @throws Exception
      */
@@ -485,6 +528,12 @@ public class XMLMapperBuilder extends BaseBuilder {
         return builderAssistant.buildDiscriminator(resultType, column, javaTypeClass, jdbcTypeEnum, typeHandlerClass, discriminatorMap);
     }
 
+    /**
+     * &lt;sql&gt;节点信息
+     *
+     * @param list sql节点列表
+     * @throws Exception
+     */
     private void sqlElement(List<XNode> list) throws Exception {
         if (configuration.getDatabaseId() != null) {
             sqlElement(list, configuration.getDatabaseId());
@@ -492,17 +541,36 @@ public class XMLMapperBuilder extends BaseBuilder {
         sqlElement(list, null);
     }
 
+    /**
+     * 解析sql节点
+     *
+     * @param list               sql节点列表
+     * @param requiredDatabaseId databaseId配置,该值在configuration节点有体现
+     * @throws Exception
+     */
     private void sqlElement(List<XNode> list, String requiredDatabaseId) throws Exception {
         for (XNode context : list) {
+            // 获取databaseId信息
             String databaseId = context.getStringAttribute("databaseId");
+            // 获取该节点的id属性
             String id = context.getStringAttribute("id");
             id = builderAssistant.applyCurrentNamespace(id, false);
             if (databaseIdMatchesCurrent(id, databaseId, requiredDatabaseId)) {
+                // 将sql片段节点保存在缓存内存之中
                 sqlFragments.put(id, context);
             }
         }
     }
 
+    /**
+     * 判断当前的databaseId是否一致. 总之一条规矩: 当在mybatis中的配置了databaseId时，在任何时候都需要保证
+     * databaseId的一致性。要么设置为一样，要么都不设置
+     *
+     * @param id                 id属性, 用于从sql片段中获取已经存在的sql片段节点
+     * @param databaseId         数据库id
+     * @param requiredDatabaseId 需要的数据库ID
+     * @return false - 如果{@code requiredDatabaseId}不为空，并且不与{@code databaseId}相同时
+     */
     private boolean databaseIdMatchesCurrent(String id, String databaseId, String requiredDatabaseId) {
         if (requiredDatabaseId != null) {
             if (!requiredDatabaseId.equals(databaseId)) {
@@ -526,9 +594,10 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     /**
      * 从resultMap子节点中获取相关配置
-     * @param context resultMapping 配置节点
+     *
+     * @param context    resultMapping 配置节点
      * @param resultType 结果类型
-     * @param flags 类型
+     * @param flags      类型
      * @return {@link ResultMapping} 结果映射对象
      * @throws Exception
      */
@@ -571,6 +640,9 @@ public class XMLMapperBuilder extends BaseBuilder {
         return null;
     }
 
+    /**
+     * 绑定Mapper对象到命名空间
+     */
     private void bindMapperForNamespace() {
         String namespace = builderAssistant.getCurrentNamespace();
         if (namespace != null) {
