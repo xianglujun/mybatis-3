@@ -76,11 +76,17 @@ public class XMLIncludeTransformer {
         if (source.getNodeName().equals("include")) {
             // 解析并获取sql片段节点信息
             Node toInclude = findSqlFragment(getStringAttribute(source, "refid"), variablesContext);
+
+            // 获取所有的配置信息, 是通过节点的name与value属性进行配置的
             Properties toIncludeContext = getVariablesContext(source, variablesContext);
+
+            // 解析对应的节点信息
             applyIncludes(toInclude, toIncludeContext, true);
             if (toInclude.getOwnerDocument() != source.getOwnerDocument()) {
                 toInclude = source.getOwnerDocument().importNode(toInclude, true);
             }
+
+            // 使用toInclude替换到source的节点信息
             source.getParentNode().replaceChild(toInclude, source);
             while (toInclude.hasChildNodes()) {
                 toInclude.getParentNode().insertBefore(toInclude.getFirstChild(), toInclude);
@@ -116,6 +122,7 @@ public class XMLIncludeTransformer {
      * @return {@link Node} sql节点信息
      */
     private Node findSqlFragment(String refid, Properties variables) {
+        // 变量解析操作, 相当于refid是可以使用configuration中的变量列表的
         refid = PropertyParser.parse(refid, variables);
         refid = builderAssistant.applyCurrentNamespace(refid, true);
         try {
@@ -146,16 +153,21 @@ public class XMLIncludeTransformer {
      */
     private Properties getVariablesContext(Node node, Properties inheritedVariablesContext) {
         Map<String, String> declaredProperties = null;
+        // 获取当前节点下的所有子节点
         NodeList children = node.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node n = children.item(i);
             if (n.getNodeType() == Node.ELEMENT_NODE) {
+                // 获取当前节点的name属性
                 String name = getStringAttribute(n, "name");
+
                 // Replace variables inside
+                // 进行占位符替换操作
                 String value = PropertyParser.parse(getStringAttribute(n, "value"), inheritedVariablesContext);
                 if (declaredProperties == null) {
                     declaredProperties = new HashMap<String, String>();
                 }
+                // 如果当前的配置项中，包含了对应的配置，则直接抛出异常
                 if (declaredProperties.put(name, value) != null) {
                     throw new BuilderException("Variable " + name + " defined twice in the same include definition");
                 }
@@ -165,6 +177,7 @@ public class XMLIncludeTransformer {
             return inheritedVariablesContext;
         }
         else {
+            // 将当前的节点内的配置添加到Properties配置项中
             Properties newProperties = new Properties();
             newProperties.putAll(inheritedVariablesContext);
             newProperties.putAll(declaredProperties);

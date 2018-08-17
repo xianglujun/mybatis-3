@@ -142,13 +142,20 @@ public class XMLStatementBuilder extends BaseBuilder {
         processSelectKeyNodes(id, parameterTypeClass, langDriver);
 
         // Parse the SQL (pre: <selectKey> and <include> were parsed and removed)
+        // 创建SQL Source
         SqlSource sqlSource = langDriver.createSqlSource(configuration, context, parameterTypeClass);
+
+        // 获取resultSets属性
         String resultSets = context.getStringAttribute("resultSets");
+        // 获取keyProperty属性
         String keyProperty = context.getStringAttribute("keyProperty");
+        // 获取keyColumn属性
         String keyColumn = context.getStringAttribute("keyColumn");
         KeyGenerator keyGenerator;
         String keyStatementId = id + SelectKeyGenerator.SELECT_KEY_SUFFIX;
         keyStatementId = builderAssistant.applyCurrentNamespace(keyStatementId, true);
+
+        // 判断是否包含了keyStatementId的逐渐生成器
         if (configuration.hasKeyGenerator(keyStatementId)) {
             keyGenerator = configuration.getKeyGenerator(keyStatementId);
         }
@@ -164,6 +171,13 @@ public class XMLStatementBuilder extends BaseBuilder {
                 keyGenerator, keyProperty, keyColumn, databaseId, langDriver, resultSets);
     }
 
+    /**
+     * 执行并解析selectKey节点信息
+     *
+     * @param id                 当前节点的id信息
+     * @param parameterTypeClass 当前操作的参数类型
+     * @param langDriver         语言驱动
+     */
     private void processSelectKeyNodes(String id, Class<?> parameterTypeClass, LanguageDriver langDriver) {
         List<XNode> selectKeyNodes = context.evalNodes("selectKey");
         if (configuration.getDatabaseId() != null) {
@@ -173,6 +187,15 @@ public class XMLStatementBuilder extends BaseBuilder {
         removeSelectKeyNodes(selectKeyNodes);
     }
 
+    /**
+     * 解析selectKey节点信息
+     *
+     * @param parentId             当前的节点id信息
+     * @param list                 所有的selectKey节点列表
+     * @param parameterTypeClass   参数类型
+     * @param langDriver           语言驱动
+     * @param skRequiredDatabaseId 数据库ID
+     */
     private void parseSelectKeyNodes(String parentId, List<XNode> list, Class<?> parameterTypeClass, LanguageDriver langDriver, String skRequiredDatabaseId) {
         for (XNode nodeToHandle : list) {
             String id = parentId + SelectKeyGenerator.SELECT_KEY_SUFFIX;
@@ -183,12 +206,32 @@ public class XMLStatementBuilder extends BaseBuilder {
         }
     }
 
+    /**
+     * 解析selectKey节点
+     *
+     * @param id id信息
+     * @param nodeToHandle 节点
+     * @param parameterTypeClass 参数类型
+     * @param langDriver 语言驱动
+     * @param databaseId 数据库ID
+     */
     private void parseSelectKeyNode(String id, XNode nodeToHandle, Class<?> parameterTypeClass, LanguageDriver langDriver, String databaseId) {
+        // 获取resultType节点
         String resultType = nodeToHandle.getStringAttribute("resultType");
+
+        // 获取resultType类型
         Class<?> resultTypeClass = resolveClass(resultType);
+
+        // statementType属性
         StatementType statementType = StatementType.valueOf(nodeToHandle.getStringAttribute("statementType", StatementType.PREPARED.toString()));
+
+        // keyProperty类型
         String keyProperty = nodeToHandle.getStringAttribute("keyProperty");
+
+        // 获取keyColumn类型
         String keyColumn = nodeToHandle.getStringAttribute("keyColumn");
+
+        // 获取order属性
         boolean executeBefore = "BEFORE".equals(nodeToHandle.getStringAttribute("order", "AFTER"));
 
         //defaults
@@ -216,6 +259,11 @@ public class XMLStatementBuilder extends BaseBuilder {
         configuration.addKeyGenerator(id, new SelectKeyGenerator(keyStatement, executeBefore));
     }
 
+    /**
+     * 移除selectKey节点
+     *
+     * @param selectKeyNodes
+     */
     private void removeSelectKeyNodes(List<XNode> selectKeyNodes) {
         for (XNode nodeToHandle : selectKeyNodes) {
             nodeToHandle.getParent().getNode().removeChild(nodeToHandle.getNode());
@@ -254,6 +302,7 @@ public class XMLStatementBuilder extends BaseBuilder {
 
     /**
      * 获取语言驱动类
+     *
      * @param lang
      * @return
      */

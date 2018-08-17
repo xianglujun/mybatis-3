@@ -101,7 +101,9 @@ public class PropertyParser {
         public String handleToken(String content) {
             if (variables != null) {
                 String key = content;
+                // 是否启用默认值
                 if (enableDefaultValue) {
+                    // 判断是否包含了默认值的表达式，通过定位默认值语法判断
                     final int separatorIndex = content.indexOf(defaultValueSeparator);
                     String defaultValue = null;
                     if (separatorIndex >= 0) {
