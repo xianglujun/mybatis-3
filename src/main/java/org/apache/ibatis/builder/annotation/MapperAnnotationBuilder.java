@@ -103,6 +103,10 @@ public class MapperAnnotationBuilder {
      * SQL注解类型，主要包括了{@link Select}, {@link Insert}, {@link Update}, {@link Delete}
      */
     private static final Set<Class<? extends Annotation>> SQL_ANNOTATION_TYPES = new HashSet<>();
+
+    /**
+     * sql provider注解列表，包括{@link SelectProvider}, {@link InsertProvider}, {@link UpdateProvider}, {@link DeleteProvider}
+     */
     private static final Set<Class<? extends Annotation>> SQL_PROVIDER_ANNOTATION_TYPES = new HashSet<>();
 
     private final Configuration configuration;
@@ -138,12 +142,17 @@ public class MapperAnnotationBuilder {
             loadXmlResource();
             configuration.addLoadedResource(resource);
             assistant.setCurrentNamespace(type.getName());
+            // 解析缓存配置
             parseCache();
+            // 解析缓存引用
             parseCacheRef();
+
+            // 获取其下的所有的方法
             Method[] methods = type.getMethods();
             for (Method method : methods) {
                 try {
                     // issue #237
+                    // 过滤掉桥接方法
                     if (!method.isBridge()) {
                         parseStatement(method);
                     }
@@ -178,6 +187,7 @@ public class MapperAnnotationBuilder {
         // Spring may not know the real resource name so we check a flag
         // to prevent loading again a resource twice
         // this flag is set at XMLMapperBuilder#bindMapperForNamespace
+        // 判断当前的类名是否已经被加载
         if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
             String xmlResource = type.getName().replace('.', '/') + ".xml";
             InputStream inputStream = null;
@@ -193,6 +203,13 @@ public class MapperAnnotationBuilder {
         }
     }
 
+    /**
+     * 解析cache对象,根据类型的{@link CacheNamespace}进行判断。
+     * <p>
+     * 当前的说明: 放在类之上的注解，会覆盖掉已有的xml配置信息，那么
+     * 类之上的注解优先级高于xml配置的缓存信息
+     * </p>
+     */
     private void parseCache() {
         CacheNamespace cacheDomain = type.getAnnotation(CacheNamespace.class);
         if (cacheDomain != null) {
@@ -203,6 +220,12 @@ public class MapperAnnotationBuilder {
         }
     }
 
+    /**
+     * 获取所有的配置信息, 主要有一个占位符解析过程
+     *
+     * @param properties 配置信息
+     * @return {@link Property} 所有的配置信息
+     */
     private Properties convertToProperties(Property[] properties) {
         if (properties.length == 0) {
             return null;
@@ -302,8 +325,13 @@ public class MapperAnnotationBuilder {
     }
 
     void parseStatement(Method method) {
+        // 获取方法参数类型
         Class<?> parameterTypeClass = getParameterType(method);
+
+        // 获取语言驱动程序
         LanguageDriver languageDriver = getLanguageDriver(method);
+
+        // 通过注解，获取sqlSource对象
         SqlSource sqlSource = getSqlSourceFromAnnotations(method, parameterTypeClass, languageDriver);
         if (sqlSource != null) {
             Options options = method.getAnnotation(Options.class);
@@ -399,6 +427,12 @@ public class MapperAnnotationBuilder {
         }
     }
 
+    /**
+     * {@link Lang}对语言驱动程序类型的配置，如果未配置，则直接使用默认的语言驱动{@link Configuration#getLanguageRegistry()}
+     *
+     * @param method
+     * @return
+     */
     private LanguageDriver getLanguageDriver(Method method) {
         Lang lang = method.getAnnotation(Lang.class);
         Class<?> langClass = null;
@@ -408,11 +442,24 @@ public class MapperAnnotationBuilder {
         return assistant.getLanguageDriver(langClass);
     }
 
+    /**
+     * 获取方法的参数类型:
+     * <ul>
+     * <li>1. 过滤掉类型为RowBounds或者其子类的参数类型</li>
+     * <li>2. 过滤掉类型为ResultHandler或者其子类的参数类型</li>
+     * <li>3. 如果方法具备了多个参数，则直接返回{@link ParamMap}类对象</li>
+     * </ul>
+     *
+     * @param method 方法对象
+     * @return {@link Class} 参数的类型对象
+     */
     private Class<?> getParameterType(Method method) {
         Class<?> parameterType = null;
         Class<?>[] parameterTypes = method.getParameterTypes();
         for (Class<?> currentParameterType : parameterTypes) {
-            if (!RowBounds.class.isAssignableFrom(currentParameterType) && !ResultHandler.class.isAssignableFrom(currentParameterType)) {
+            // 判断参数类型是否为RowBounds或者ResultHandler类型或者其子类
+            if (!RowBounds.class.isAssignableFrom(currentParameterType)
+                    && !ResultHandler.class.isAssignableFrom(currentParameterType)) {
                 if (parameterType == null) {
                     parameterType = currentParameterType;
                 }
@@ -488,15 +535,31 @@ public class MapperAnnotationBuilder {
         return returnType;
     }
 
+    /**
+     * 根据注解构建{@link SqlSource}对象
+     *
+     * @param method 需要执行的方法
+     * @param parameterType 参数类型
+     * @param languageDriver 语言驱动器
+     * @return {@link SqlSource} 对象
+     */
     private SqlSource getSqlSourceFromAnnotations(Method method, Class<?> parameterType, LanguageDriver languageDriver) {
         try {
+            // 获取方法操作类型注解
             Class<? extends Annotation> sqlAnnotationType = getSqlAnnotationType(method);
+
+            // 获取SQL provider类型
             Class<? extends Annotation> sqlProviderAnnotationType = getSqlProviderAnnotationType(method);
             if (sqlAnnotationType != null) {
+                // 通过该条件判断，可以看出SqlAnnotation 和 sqlProvider不能同时出现
                 if (sqlProviderAnnotationType != null) {
                     throw new BindingException("You cannot supply both a static SQL and SqlProvider to method named " + method.getName());
                 }
+
+                // 获取sql操作类型
                 Annotation sqlAnnotation = method.getAnnotation(sqlAnnotationType);
+
+                // 获取注解配置的value值
                 final String[] strings = (String[]) sqlAnnotation.getClass().getMethod("value").invoke(sqlAnnotation);
                 return buildSqlSourceFromStrings(strings, parameterType, languageDriver);
             }
@@ -510,6 +573,13 @@ public class MapperAnnotationBuilder {
         }
     }
 
+    /**
+     * 从注解列表的value配置中获取{@link SqlSource}的值
+     * @param strings sql注解配置的具体的值
+     * @param parameterTypeClass 参数类型
+     * @param languageDriver 语言驱动对象
+     * @return {@link SqlSource} 对象
+     */
     private SqlSource buildSqlSourceFromStrings(String[] strings, Class<?> parameterTypeClass, LanguageDriver languageDriver) {
         final StringBuilder sql = new StringBuilder();
         for (String fragment : strings) {
@@ -546,14 +616,30 @@ public class MapperAnnotationBuilder {
         return SqlCommandType.valueOf(type.getSimpleName().toUpperCase(Locale.ENGLISH));
     }
 
+    /**
+     * 获取sql注解类型
+     * @param method 方法对象
+     * @return {@link Class} 注解对象
+     */
     private Class<? extends Annotation> getSqlAnnotationType(Method method) {
         return chooseAnnotationType(method, SQL_ANNOTATION_TYPES);
     }
 
+    /**
+     * 获取SQL provider类型
+     * @param method
+     * @return
+     */
     private Class<? extends Annotation> getSqlProviderAnnotationType(Method method) {
         return chooseAnnotationType(method, SQL_PROVIDER_ANNOTATION_TYPES);
     }
 
+    /**
+     * 选择注解类型对象
+     * @param method 需要操作的方法对象
+     * @param types 注解列表
+     * @return
+     */
     private Class<? extends Annotation> chooseAnnotationType(Method method, Set<Class<? extends Annotation>> types) {
         for (Class<? extends Annotation> type : types) {
             Annotation annotation = method.getAnnotation(type);

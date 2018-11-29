@@ -121,6 +121,7 @@ public class XMLMapperBuilder extends BaseBuilder {
         // 判断资源是否被加载
         if (!configuration.isResourceLoaded(resource)) {
             configurationElement(parser.evalNode("/mapper"));
+            // 添加已经解析的资源路径或名称
             configuration.addLoadedResource(resource);
             // 绑定Mapper和命名空间之间的关系
             bindMapperForNamespace();

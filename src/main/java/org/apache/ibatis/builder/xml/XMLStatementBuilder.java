@@ -160,6 +160,7 @@ public class XMLStatementBuilder extends BaseBuilder {
             keyGenerator = configuration.getKeyGenerator(keyStatementId);
         }
         else {
+            // 查看是否使用useGeneratedKey属性
             keyGenerator = context.getBooleanAttribute("useGeneratedKeys",
                     configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType))
                     ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;

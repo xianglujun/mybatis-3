@@ -61,8 +61,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
     /**
      * 构建{@link MapperBuilderAssistant} 对象
+     *
      * @param configuration MyBatis配置文件
-     * @param resource 资源路径信息
+     * @param resource      资源路径信息
      */
     public MapperBuilderAssistant(Configuration configuration, String resource) {
         super(configuration);
@@ -90,7 +91,8 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
     /**
      * 解析命名空间。应该是对命名空间名称的合法性进行验证
-     * @param base 命名空间
+     *
+     * @param base        命名空间
      * @param isReference 是否引用
      * @return
      */
@@ -124,9 +126,10 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
     /**
      * 查询{@code namespace}的缓存对象
+     *
      * @param namespace 命名空间
      * @return {@link Cache} 缓存对象
-     * @throws BuilderException 入参不正确
+     * @throws BuilderException           入参不正确
      * @throws IncompleteElementException 当指定的namespace对象不存在时
      */
     public Cache useCacheRef(String namespace) {
@@ -150,13 +153,14 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
     /**
      * 构建新的{@link Cache}缓存对象
-     * @param typeClass 缓存类型
+     *
+     * @param typeClass     缓存类型
      * @param evictionClass 移除缓存元素策略类型
      * @param flushInterval 执行刷新间隔时间
-     * @param size 缓存中最大缓存实体数量
-     * @param readWrite 是否能够读写?
-     * @param blocking blocking配置
-     * @param props 所有的properties配置信息
+     * @param size          缓存中最大缓存实体数量
+     * @param readWrite     是否能够读写?
+     * @param blocking      blocking配置
+     * @param props         所有的properties配置信息
      * @return {@link Cache} 缓存对象
      */
     public Cache useNewCache(Class<? extends Cache> typeClass,
@@ -189,8 +193,8 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
     /**
      * 构建{@link ParameterMapping}对象,用于存储每一个ParameterMap下的不同的Parameter
-     * @param parameterType
      *
+     * @param parameterType
      * @param property
      * @param javaType
      * @param jdbcType
@@ -299,6 +303,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
     /**
      * 构建 {@link MappedStatement} 对象
+     *
      * @param id
      * @param sqlSource
      * @param statementType
@@ -343,11 +348,14 @@ public class MapperBuilderAssistant extends BaseBuilder {
             LanguageDriver lang,
             String resultSets) {
 
+        // 判断是否有未识别的cache-ref配置
         if (unresolvedCacheRef) {
             throw new IncompleteElementException("Cache-ref not yet resolved");
         }
 
+        // 解析当前的id,主要目的判断id配置是否合法，要么namespace开头?要么不能包含"."
         id = applyCurrentNamespace(id, false);
+        // 判断是否为查询语句
         boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
 
         MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, id, sqlSource, sqlCommandType)
@@ -368,6 +376,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
                 .useCache(valueOrDefault(useCache, isSelect))
                 .cache(currentCache);
 
+        // 获取parameterMap类型，分为两种情况，
+        // 1. 通过ParameterMap属性配置，直接在Configuration中根据id属性进行查找
+        // 2. 通过parameterType属性配置，则需要生成新的ParameterMap对象
         ParameterMap statementParameterMap = getStatementParameterMap(parameterMap, parameterType, id);
         if (statementParameterMap != null) {
             statementBuilder.parameterMap(statementParameterMap);
@@ -381,21 +392,31 @@ public class MapperBuilderAssistant extends BaseBuilder {
     /**
      * 判断{@code value} 是否合法，如果不合法，则以{@code defaultValue}为默认值返回
      *
-     * @param value 需要判断的值
+     * @param value        需要判断的值
      * @param defaultValue 当{@code value} 不合法时，返回该值
-     * @param <T> 泛型类型
+     * @param <T>          泛型类型
      * @return 判断之后的值
      */
     private <T> T valueOrDefault(T value, T defaultValue) {
         return value == null ? defaultValue : value;
     }
 
+    /**
+     * 获取表达式的参数映射
+     *
+     * @param parameterMapName 参数映射名称
+     * @param parameterTypeClass 参数映射类型
+     * @param statementId 表达式id
+     * @return {@link ParameterMap} 参数映射
+     */
     private ParameterMap getStatementParameterMap(
             String parameterMapName,
             Class<?> parameterTypeClass,
             String statementId) {
         parameterMapName = applyCurrentNamespace(parameterMapName, true);
         ParameterMap parameterMap = null;
+
+        // 代表配置的有parameterMap属性
         if (parameterMapName != null) {
             try {
                 parameterMap = configuration.getParameterMap(parameterMapName);
@@ -404,6 +425,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
             }
         }
         else if (parameterTypeClass != null) {
+            // 表示通过parameterType进行配置
             List<ParameterMapping> parameterMappings = new ArrayList<ParameterMapping>();
             parameterMap = new ParameterMap.Builder(
                     configuration,
@@ -542,7 +564,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return javaType;
     }
 
-    /** Backward compatibility signature */
+    /**
+     * Backward compatibility signature
+     */
     public ResultMapping buildResultMapping(
             Class<?> resultType,
             String property,
@@ -570,7 +594,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
         return configuration.getLanguageRegistry().getDriver(langClass);
     }
 
-    /** Backward compatibility signature */
+    /**
+     * Backward compatibility signature
+     */
     public MappedStatement addMappedStatement(
             String id,
             SqlSource sqlSource,
