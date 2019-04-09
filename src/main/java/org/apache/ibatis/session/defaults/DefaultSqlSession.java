@@ -317,6 +317,11 @@ public class DefaultSqlSession implements SqlSession {
     return (!autoCommit && dirty) || force;
   }
 
+  /**
+   * 包装参数: 这里主要是在讲collection以及数据操作的类型封装为Map并返回
+   * @param object 参数对象
+   * @return object 封装之后的对象
+   */
   private Object wrapCollection(final Object object) {
     if (object instanceof Collection) {
       StrictMap<Object> map = new StrictMap<Object>();

@@ -246,10 +246,12 @@ public class XPathParser {
             factory.setNamespaceAware(false);
             factory.setIgnoringComments(true);
             factory.setIgnoringElementContentWhitespace(false);
+            // 是否将CDATA信息转换为text节点
             factory.setCoalescing(false);
             factory.setExpandEntityReferences(true);
 
             DocumentBuilder builder = factory.newDocumentBuilder();
+            // 设置实体解析器
             builder.setEntityResolver(entityResolver);
             builder.setErrorHandler(new ErrorHandler() {
                 @Override

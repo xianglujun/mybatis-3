@@ -50,7 +50,9 @@ public class ParamNameResolver {
   private boolean hasParamAnnotation;
 
   public ParamNameResolver(Configuration config, Method method) {
+    // 获取方法请求参数类型列表
     final Class<?>[] paramTypes = method.getParameterTypes();
+    // 获取方法注解列表
     final Annotation[][] paramAnnotations = method.getParameterAnnotations();
     final SortedMap<Integer, String> map = new TreeMap<Integer, String>();
     int paramCount = paramAnnotations.length;
@@ -58,21 +60,29 @@ public class ParamNameResolver {
     for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
       if (isSpecialParameter(paramTypes[paramIndex])) {
         // skip special parameters
+        // 跳过特殊的参数类型: RowBounds和ResultHandler
         continue;
       }
+
       String name = null;
       for (Annotation annotation : paramAnnotations[paramIndex]) {
+        // 判断是否使用了@Param注解
         if (annotation instanceof Param) {
           hasParamAnnotation = true;
           name = ((Param) annotation).value();
           break;
         }
       }
+
       if (name == null) {
         // @Param was not specified.
-        if (config.isUseActualParamName()) {
+        // 当@Param注解没有使用的时候
+        if (config.isUseActualParamName()) { // 判断是否设置了 useActualParamName的配置
+          // 获取实际的参数名称
           name = getActualParamName(method, paramIndex);
         }
+
+        // 如果
         if (name == null) {
           // use the parameter index as the name ("0", "1", ...)
           // gcode issue #71
@@ -91,6 +101,11 @@ public class ParamNameResolver {
     return null;
   }
 
+  /**
+   * 判断是否为特殊的参数类型
+   * @param clazz 类型
+   * @return 是否为特殊的参数类型
+   */
   private static boolean isSpecialParameter(Class<?> clazz) {
     return RowBounds.class.isAssignableFrom(clazz) || ResultHandler.class.isAssignableFrom(clazz);
   }
@@ -114,7 +129,7 @@ public class ParamNameResolver {
     final int paramCount = names.size();
     if (args == null || paramCount == 0) {
       return null;
-    } else if (!hasParamAnnotation && paramCount == 1) {
+    } else if (!hasParamAnnotation && paramCount == 1) { // 判断是否包含了注解
       return args[names.firstKey()];
     } else {
       final Map<String, Object> param = new ParamMap<Object>();

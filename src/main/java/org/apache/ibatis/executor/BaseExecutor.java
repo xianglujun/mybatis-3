@@ -110,10 +110,13 @@ public abstract class BaseExecutor implements Executor {
   @Override
   public int update(MappedStatement ms, Object parameter) throws SQLException {
     ErrorContext.instance().resource(ms.getResource()).activity("executing an update").object(ms.getId());
+    // 判断executor是否已经被关闭
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    // 清空本地缓存
     clearLocalCache();
+    // 执行更新操作
     return doUpdate(ms, parameter);
   }
 
@@ -191,6 +194,14 @@ public abstract class BaseExecutor implements Executor {
     }
   }
 
+  /**
+   * 创建缓存的key
+   * @param ms 映射语句对象
+   * @param parameterObject 参数对象
+   * @param rowBounds 绑定参数
+   * @param boundSql 绑定SQL
+   * @return 缓存的key
+   */
   @Override
   public CacheKey createCacheKey(MappedStatement ms, Object parameterObject, RowBounds rowBounds, BoundSql boundSql) {
     if (closed) {
@@ -267,6 +278,13 @@ public abstract class BaseExecutor implements Executor {
     }
   }
 
+  /**
+   * 这是一个钩子方法, 用于在不同的executor中有不同的实现
+   * @param ms 映射的SQL语句信息
+   * @param parameter 参数信息
+   * @return 更新的记录条数
+   * @throws SQLException 当SQL执行异常的时候, 抛出该异常
+   */
   protected abstract int doUpdate(MappedStatement ms, Object parameter)
       throws SQLException;
 
@@ -334,7 +352,14 @@ public abstract class BaseExecutor implements Executor {
     return list;
   }
 
+  /**
+   * 获取数据库连接对象
+   * @param statementLog 日志输出对象
+   * @return
+   * @throws SQLException
+   */
   protected Connection getConnection(Log statementLog) throws SQLException {
+    // 从失误对象中获取数据库连接对象
     Connection connection = transaction.getConnection();
     if (statementLog.isDebugEnabled()) {
       return ConnectionLogger.newInstance(connection, statementLog, queryStack);

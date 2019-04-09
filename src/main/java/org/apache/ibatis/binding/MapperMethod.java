@@ -48,8 +48,16 @@ public class MapperMethod {
   private final SqlCommand command;
   private final MethodSignature method;
 
+  /**
+   * 创建映射方法对象
+   * @param mapperInterface 接口class对象
+   * @param method 执行的方法
+   * @param config 配置对象
+   */
   public MapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+    // 创建SqlCommand对象
     this.command = new SqlCommand(config, mapperInterface, method);
+
     this.method = new MethodSignature(config, mapperInterface, method);
   }
 
@@ -96,6 +104,7 @@ public class MapperMethod {
       default:
         throw new BindingException("Unknown execution method for: " + command.getName());
     }
+
     if (result == null && method.getReturnType().isPrimitive() && !method.returnsVoid()) {
       throw new BindingException("Mapper method '" + command.getName() 
           + " attempted to return null from a method with a primitive return type (" + method.getReturnType() + ").");
@@ -220,22 +229,35 @@ public class MapperMethod {
     private final String name;
     private final SqlCommandType type;
 
+    /**
+     * SQL命令
+     * @param configuration 配置对象
+     * @param mapperInterface 接口class对象
+     * @param method 执行的方法
+     */
     public SqlCommand(Configuration configuration, Class<?> mapperInterface, Method method) {
       final String methodName = method.getName();
+      // 获取声明方法的类型
       final Class<?> declaringClass = method.getDeclaringClass();
+      // 获取SQL的映射对象
       MappedStatement ms = resolveMappedStatement(mapperInterface, methodName, declaringClass,
           configuration);
       if (ms == null) {
+        // 判断是否包含有Flush的注解
         if(method.getAnnotation(Flush.class) != null){
           name = null;
+          // 这里存储的是操作的类型
           type = SqlCommandType.FLUSH;
         } else {
           throw new BindingException("Invalid bound statement (not found): "
               + mapperInterface.getName() + "." + methodName);
         }
-      } else {
+      } else { // 此处表明根据mapperClassName + methodName查找到了对应的执行语句对象
+        // 获取ID
         name = ms.getId();
+        // 获取操作类型
         type = ms.getSqlCommandType();
+        // 判断类型是否都正确
         if (type == SqlCommandType.UNKNOWN) {
           throw new BindingException("Unknown execution method for: " + name);
         }
@@ -252,12 +274,15 @@ public class MapperMethod {
 
     private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
         Class<?> declaringClass, Configuration configuration) {
+      // 获取SQL语句ID
       String statementId = mapperInterface.getName() + "." + methodName;
+      // 判断配置中是否包含了SQL语句
       if (configuration.hasStatement(statementId)) {
         return configuration.getMappedStatement(statementId);
       } else if (mapperInterface.equals(declaringClass)) {
         return null;
       }
+      // 这里是判断发生了接口继承的情况
       for (Class<?> superInterface : mapperInterface.getInterfaces()) {
         if (declaringClass.isAssignableFrom(superInterface)) {
           MappedStatement ms = resolveMappedStatement(superInterface, methodName,
@@ -285,22 +310,36 @@ public class MapperMethod {
     private final ParamNameResolver paramNameResolver;
 
     public MethodSignature(Configuration configuration, Class<?> mapperInterface, Method method) {
+      // 获取方法返回类型
       Type resolvedReturnType = TypeParameterResolver.resolveReturnType(method, mapperInterface);
+
       if (resolvedReturnType instanceof Class<?>) {
         this.returnType = (Class<?>) resolvedReturnType;
+
       } else if (resolvedReturnType instanceof ParameterizedType) {
         this.returnType = (Class<?>) ((ParameterizedType) resolvedReturnType).getRawType();
+
       } else {
         this.returnType = method.getReturnType();
       }
+
+      // 是否为void返回类型
       this.returnsVoid = void.class.equals(this.returnType);
+      // 是否返回集合类型
       this.returnsMany = configuration.getObjectFactory().isCollection(this.returnType) || this.returnType.isArray();
+      // 是否返回Cursor
       this.returnsCursor = Cursor.class.equals(this.returnType);
+      // 判断是否为Optional返回类型
       this.returnsOptional = Jdk.optionalExists && Optional.class.equals(this.returnType);
+      // 获取MapKey注解的具体值
       this.mapKey = getMapKey(method);
+      // 判断是否返回Map对象
       this.returnsMap = this.mapKey != null;
+      // 判断RowBounds处于第几个方法参数位置
       this.rowBoundsIndex = getUniqueParamIndex(method, RowBounds.class);
+      // 判断ResultHandler处于参数的索引位置
       this.resultHandlerIndex = getUniqueParamIndex(method, ResultHandler.class);
+      // 参数名称解析器
       this.paramNameResolver = new ParamNameResolver(configuration, method);
     }
 

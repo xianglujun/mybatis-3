@@ -693,6 +693,16 @@ public class Configuration {
         return resultSetHandler;
     }
 
+    /**
+     * 创建StatementHandler对象
+     * @param executor 执行对象
+     * @param mappedStatement 映射的SQL语句信息
+     * @param parameterObject 参数对象
+     * @param rowBounds RowBounds对象
+     * @param resultHandler 结果处理器
+     * @param boundSql 绑定的SQL信息
+     * @return StatementHandler对象
+     */
     public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
         StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
         statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
@@ -703,7 +713,14 @@ public class Configuration {
         return newExecutor(transaction, defaultExecutorType);
     }
 
+    /**
+     * 创建Executor对象
+     * @param transaction 事务对象
+     * @param executorType executor类型
+     * @return Executor对象
+     */
     public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+        // 如果没有设置执行器类型, 则默认使用SIMPLE
         executorType = executorType == null ? defaultExecutorType : executorType;
         executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
         Executor executor;
@@ -716,9 +733,13 @@ public class Configuration {
         else {
             executor = new SimpleExecutor(this, transaction);
         }
+
+        // 是否开启了二级缓存
         if (cacheEnabled) {
             executor = new CachingExecutor(executor);
         }
+
+        // 将当前的执行器放入到拦截器之中
         executor = (Executor) interceptorChain.pluginAll(executor);
         return executor;
     }

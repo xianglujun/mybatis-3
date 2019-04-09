@@ -164,6 +164,7 @@ public class MetaClass {
 
     public boolean hasSetter(String name) {
         PropertyTokenizer prop = new PropertyTokenizer(name);
+        // 是否包含了".xxx"的数据
         if (prop.hasNext()) {
             if (reflector.hasSetter(prop.getName())) {
                 MetaClass metaProp = metaClassForProperty(prop.getName());

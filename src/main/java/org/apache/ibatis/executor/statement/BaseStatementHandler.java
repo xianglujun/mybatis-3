@@ -85,8 +85,11 @@ public abstract class BaseStatementHandler implements StatementHandler {
     ErrorContext.instance().sql(boundSql.getSql());
     Statement statement = null;
     try {
+      // 初始化Statement对象, 并对sql进行预编译
       statement = instantiateStatement(connection);
+      // 设置SQL语句执行超时时间
       setStatementTimeout(statement, transactionTimeout);
+      // 设置fetchSize的属性
       setFetchSize(statement);
       return statement;
     } catch (SQLException e) {
@@ -98,27 +101,51 @@ public abstract class BaseStatementHandler implements StatementHandler {
     }
   }
 
+  /**
+   * 初始化Statement对象
+   * @param connection 数据库连接对象
+   * @return Statement对象
+   * @throws SQLException 执行SQL异常
+   */
   protected abstract Statement instantiateStatement(Connection connection) throws SQLException;
 
+  /**
+   * 设置SLQ执行的异常事件
+   * @param stmt 描述编译对象
+   * @param transactionTimeout
+   * @throws SQLException
+   */
   protected void setStatementTimeout(Statement stmt, Integer transactionTimeout) throws SQLException {
     Integer queryTimeout = null;
+    // 判断MappedStatement中是否设置了超时时间
     if (mappedStatement.getTimeout() != null) {
       queryTimeout = mappedStatement.getTimeout();
-    } else if (configuration.getDefaultStatementTimeout() != null) {
+    } else if (configuration.getDefaultStatementTimeout() != null) { // 如果MappedStatement中没有设置超时时间, 则从Configuration中获取
       queryTimeout = configuration.getDefaultStatementTimeout();
     }
+
+    // 如果查询的超时时间不为空, 则设置过期时间
     if (queryTimeout != null) {
       stmt.setQueryTimeout(queryTimeout);
     }
     StatementUtil.applyTransactionTimeout(stmt, queryTimeout, transactionTimeout);
   }
 
+  /**
+   * 设置Statement的FetchSize的属性
+   * @param stmt 执行Statement对象
+   * @throws SQLException SQL执行语句异常
+   */
   protected void setFetchSize(Statement stmt) throws SQLException {
+
+    // 获取在Mapper中配置的fetchSize的属性
     Integer fetchSize = mappedStatement.getFetchSize();
     if (fetchSize != null) {
       stmt.setFetchSize(fetchSize);
       return;
     }
+
+    // 如果Mapper中没有设置fetchSize, 则获取全局的defaultFetchSize配置
     Integer defaultFetchSize = configuration.getDefaultFetchSize();
     if (defaultFetchSize != null) {
       stmt.setFetchSize(defaultFetchSize);

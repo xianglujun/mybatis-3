@@ -67,6 +67,7 @@ public class TypeParameterResolver {
     }
 
     private static Type resolveType(Type type, Type srcType, Class<?> declaringClass) {
+        // 判断类型是否为形参
         if (type instanceof TypeVariable) {
             return resolveTypeVar((TypeVariable<?>) type, srcType, declaringClass);
         }

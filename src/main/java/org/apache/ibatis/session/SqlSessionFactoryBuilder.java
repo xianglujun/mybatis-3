@@ -72,6 +72,13 @@ public class SqlSessionFactoryBuilder {
     return build(inputStream, null, properties);
   }
 
+  /**
+   * 构建SqlSessionFactory对象, 这里指定了环境名称，以及自定义参数
+   * @param inputStream xml文件的输入流
+   * @param environment 指定使用的环境名称
+   * @param properties 自定义配置文件
+   * @return
+   */
   public SqlSessionFactory build(InputStream inputStream, String environment, Properties properties) {
     try {
       XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);

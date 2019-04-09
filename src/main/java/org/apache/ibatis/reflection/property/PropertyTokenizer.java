@@ -27,7 +27,9 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
     private final String children;
 
     public PropertyTokenizer(String fullname) {
+        // 判断名称中是否包含了"."字符
         int delim = fullname.indexOf('.');
+        // 如果包含了， 则将字符分成两部分
         if (delim > -1) {
             name = fullname.substring(0, delim);
             children = fullname.substring(delim + 1);
@@ -36,10 +38,14 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
             name = fullname;
             children = null;
         }
+        // 索引名称
         indexedName = name;
+        // 判断名称中是否包含了"["(这个好像是jvm中的类型表示法)
         delim = name.indexOf('[');
         if (delim > -1) {
+            // 名称"["后面那一坨
             index = name.substring(delim + 1, name.length() - 1);
+            // 名称 "["前面那一坨
             name = name.substring(0, delim);
         }
     }

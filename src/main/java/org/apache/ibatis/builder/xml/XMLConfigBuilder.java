@@ -55,6 +55,9 @@ import org.apache.ibatis.type.TypeHandler;
  */
 public class XMLConfigBuilder extends BaseBuilder {
 
+    /**
+     * 判断是否已经解析过
+     */
     private boolean parsed;
     private final XPathParser parser;
     /**
@@ -87,15 +90,27 @@ public class XMLConfigBuilder extends BaseBuilder {
         this(new XPathParser(inputStream, true, props, new XMLMapperEntityResolver()), environment, props);
     }
 
+    /**
+     * 构建XMLConfigBuilder对象, 用于解析Mybatis的config配置文件
+     * @param parser xml解析器
+     * @param environment 环境名称
+     * @param props 编程式配置信息
+     */
     private XMLConfigBuilder(XPathParser parser, String environment, Properties props) {
+        // 创建Configuration对象, 便于保存config文件中的配置对象
         super(new Configuration());
         ErrorContext.instance().resource("SQL Mapper Configuration");
+        // 设置自定义的配置信息
         this.configuration.setVariables(props);
         this.parsed = false;
         this.environment = environment;
         this.parser = parser;
     }
 
+    /**
+     * 解析XML并转换为Configuration对象
+     * @return
+     */
     public Configuration parse() {
         if (parsed) {
             throw new BuilderException("Each XMLConfigBuilder can only be used once.");
@@ -105,6 +120,10 @@ public class XMLConfigBuilder extends BaseBuilder {
         return configuration;
     }
 
+    /**
+     * 解析<configuration />节点
+     * @param root
+     */
     private void parseConfiguration(XNode root) {
         try {
             //issue #117 read properties first
@@ -122,6 +141,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
             objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
             reflectorFactoryElement(root.evalNode("reflectorFactory"));
+            // 设置settings参数到Configuration中
             settingsElement(settings);
             // read it after objectFactory and objectWrapperFactory issue #631
             // 加载environments标签
@@ -284,6 +304,8 @@ public class XMLConfigBuilder extends BaseBuilder {
             else if (url != null) {
                 defaults.putAll(Resources.getUrlAsProperties(url));
             }
+
+            // 加载程序中自定义的属性配置
             Properties vars = configuration.getVariables();
             if (vars != null) {
                 defaults.putAll(vars);
