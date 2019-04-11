@@ -28,6 +28,9 @@ import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * 对于Mybatis而言,通过获取Mapper的方式, 是通过JDK的动态代理的方式创建对象,
+ * 最终会通过{@link MapperProxy}对象来处理具体的方法调用
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */

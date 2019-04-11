@@ -98,13 +98,17 @@ public class MapperRegistry {
     }
 
     /**
+     * 获取Mapper列表
+     *
      * @since 3.2.2
      */
     public Collection<Class<?>> getMappers() {
         return Collections.unmodifiableCollection(knownMappers.keySet());
     }
 
+
     /**
+     * 根据包名加载Mapper列表, 会扫描出包下的所有的类, 并根据类进行匹配
      * @since 3.2.2
      */
     public void addMappers(String packageName, Class<?> superType) {

@@ -108,6 +108,7 @@ public class GenericTokenParser {
                         break;
                     }
                 }
+
                 if (end == -1) {
                     // close token was not found.
                     builder.append(src, start, src.length - start);

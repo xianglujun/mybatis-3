@@ -79,8 +79,7 @@ public class XMLScriptBuilder extends BaseBuilder {
         if (isDynamic) {
             // 动态SQL
             sqlSource = new DynamicSqlSource(configuration, rootSqlNode);
-        }
-        else {
+        } else {
             // 静态SQL
             sqlSource = new RawSqlSource(configuration, rootSqlNode, parameterType);
         }
@@ -95,9 +94,12 @@ public class XMLScriptBuilder extends BaseBuilder {
      */
     protected MixedSqlNode parseDynamicTags(XNode node) {
         List<SqlNode> contents = new ArrayList<SqlNode>();
+        // 获取节点下的所有子节点
         NodeList children = node.getNode().getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             XNode child = node.newXNode(children.item(i));
+
+            // 判断节点的类型CDATA/TEXT
             if (child.getNode().getNodeType() == Node.CDATA_SECTION_NODE
                     || child.getNode().getNodeType() == Node.TEXT_NODE) {
                 // 获取节点的String信息
@@ -108,12 +110,10 @@ public class XMLScriptBuilder extends BaseBuilder {
                 if (textSqlNode.isDynamic()) {
                     contents.add(textSqlNode);
                     isDynamic = true;
-                }
-                else {
+                } else {
                     contents.add(new StaticTextSqlNode(data));
                 }
-            }
-            else if (child.getNode().getNodeType() == Node.ELEMENT_NODE) { // issue #628
+            } else if (child.getNode().getNodeType() == Node.ELEMENT_NODE) { // issue #628
                 // 标识的是元素节点
                 String nodeName = child.getNode().getNodeName();
 
@@ -280,8 +280,7 @@ public class XMLScriptBuilder extends BaseBuilder {
                 NodeHandler handler = nodeHandlerMap.get(nodeName);
                 if (handler instanceof IfHandler) {
                     handler.handleNode(child, ifSqlNodes);
-                }
-                else if (handler instanceof OtherwiseHandler) {
+                } else if (handler instanceof OtherwiseHandler) {
                     handler.handleNode(child, defaultSqlNodes);
                 }
             }
@@ -291,8 +290,7 @@ public class XMLScriptBuilder extends BaseBuilder {
             SqlNode defaultSqlNode = null;
             if (defaultSqlNodes.size() == 1) {
                 defaultSqlNode = defaultSqlNodes.get(0);
-            }
-            else if (defaultSqlNodes.size() > 1) {
+            } else if (defaultSqlNodes.size() > 1) {
                 throw new BuilderException("Too many default (otherwise) elements in choose statement.");
             }
             return defaultSqlNode;

@@ -179,6 +179,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
                 .blocking(blocking)
                 .properties(props)
                 .build();
+        // 将解析出来的缓存放入到configuration中
         configuration.addCache(cache);
         currentCache = cache;
         return cache;
@@ -304,26 +305,26 @@ public class MapperBuilderAssistant extends BaseBuilder {
     /**
      * 构建 {@link MappedStatement} 对象
      *
-     * @param id
-     * @param sqlSource
-     * @param statementType
-     * @param sqlCommandType
-     * @param fetchSize
-     * @param timeout
-     * @param parameterMap
-     * @param parameterType
-     * @param resultMap
-     * @param resultType
-     * @param resultSetType
-     * @param flushCache
-     * @param useCache
-     * @param resultOrdered
-     * @param keyGenerator
-     * @param keyProperty
-     * @param keyColumn
-     * @param databaseId
-     * @param lang
-     * @param resultSets
+     * @param id 节点ID
+     * @param sqlSource sqlSource对象
+     * @param statementType 语句类型
+     * @param sqlCommandType 命令类型
+     * @param fetchSize 拉取数据的最大条数
+     * @param timeout 超时时间
+     * @param parameterMap 参数类型映射
+     * @param parameterType 参数类型
+     * @param resultMap 结果集映射
+     * @param resultType 结果类型
+     * @param resultSetType 结果集类型
+     * @param flushCache 是否刷新缓存
+     * @param useCache 是否使用缓存
+     * @param resultOrdered 结果集排序
+     * @param keyGenerator ID生成器
+     * @param keyProperty 主键属性
+     * @param keyColumn 主键的字段名称
+     * @param databaseId 数据库ID
+     * @param lang 语言
+     * @param resultSets 结果集
      * @return
      */
     public MappedStatement addMappedStatement(
@@ -354,6 +355,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
         }
 
         // 解析当前的id,主要目的判断id配置是否合法，要么namespace开头?要么不能包含"."
+        // 这里是为MappedStatement设置Id属性, 格式为namespace + "." + id;
         id = applyCurrentNamespace(id, false);
         // 判断是否为查询语句
         boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
@@ -372,8 +374,8 @@ public class MapperBuilderAssistant extends BaseBuilder {
                 .resultSets(resultSets)
                 .resultMaps(getStatementResultMaps(resultMap, resultType, id))
                 .resultSetType(resultSetType)
-                .flushCacheRequired(valueOrDefault(flushCache, !isSelect))
-                .useCache(valueOrDefault(useCache, isSelect))
+                .flushCacheRequired(valueOrDefault(flushCache, !isSelect)) // 是否刷新缓存
+                .useCache(valueOrDefault(useCache, isSelect)) // 是否使用缓存
                 .cache(currentCache);
 
         // 获取parameterMap类型，分为两种情况，

@@ -136,7 +136,10 @@ public class MapperAnnotationBuilder {
      * 解析Mapper的{@link Class}对象
      */
     public void parse() {
+        // 对于Class而言, Class.toString会在类型的全限定名称前面加上
+        // 当前Class代表的类型：interface / class xxx.xxx.Class
         String resource = type.toString();
+
         // 判断该类型是否已经被加载
         if (!configuration.isResourceLoaded(resource)) {
             loadXmlResource();

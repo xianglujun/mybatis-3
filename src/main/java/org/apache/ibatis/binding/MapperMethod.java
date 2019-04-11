@@ -106,7 +106,7 @@ public class MapperMethod {
     }
 
     if (result == null && method.getReturnType().isPrimitive() && !method.returnsVoid()) {
-      throw new BindingException("Mapper method '" + command.getName() 
+      throw new BindingException("Mapper method '" + command.getName()
           + " attempted to return null from a method with a primitive return type (" + method.getReturnType() + ").");
     }
     return result;
@@ -132,8 +132,8 @@ public class MapperMethod {
     MappedStatement ms = sqlSession.getConfiguration().getMappedStatement(command.getName());
     if (!StatementType.CALLABLE.equals(ms.getStatementType())
         && void.class.equals(ms.getResultMaps().get(0).getType())) {
-      throw new BindingException("method " + command.getName() 
-          + " needs either a @ResultMap annotation, a @ResultType annotation," 
+      throw new BindingException("method " + command.getName()
+          + " needs either a @ResultMap annotation, a @ResultType annotation,"
           + " or a resultType attribute in XML so a ResultHandler can be used as a parameter.");
     }
     Object param = method.convertArgsToSqlCommandParam(args);
@@ -272,6 +272,14 @@ public class MapperMethod {
       return type;
     }
 
+    /**
+     * 获取MappedStatement对象
+     * @param mapperInterface mapper的接口类型
+     * @param methodName 调用的方法名称
+     * @param declaringClass 方法声明类型
+     * @param configuration 配置对象
+     * @return MappedStatement对象
+     */
     private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String methodName,
         Class<?> declaringClass, Configuration configuration) {
       // 获取SQL语句ID
@@ -282,6 +290,7 @@ public class MapperMethod {
       } else if (mapperInterface.equals(declaringClass)) {
         return null;
       }
+
       // 这里是判断发生了接口继承的情况
       for (Class<?> superInterface : mapperInterface.getInterfaces()) {
         if (declaringClass.isAssignableFrom(superInterface)) {
