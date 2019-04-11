@@ -946,30 +946,36 @@ public class Configuration {
         cacheRefMap.put(namespace, referencedNamespace);
     }
 
-    /*
+    /**
      * Parses all the unprocessed statement nodes in the cache. It is recommended
      * to call this method once all the mappers are added as it provides fail-fast
      * statement validation.
      */
     protected void buildAllStatements() {
+        // 如果还有没有解析晚的ResultMap, 则继续解析
         if (!incompleteResultMaps.isEmpty()) {
             synchronized (incompleteResultMaps) {
                 // This always throws a BuilderException.
                 incompleteResultMaps.iterator().next().resolve();
             }
         }
+        // 如果有没有解析完的cacheRef, 则继续解析
         if (!incompleteCacheRefs.isEmpty()) {
             synchronized (incompleteCacheRefs) {
                 // This always throws a BuilderException.
                 incompleteCacheRefs.iterator().next().resolveCacheRef();
             }
         }
+
+        // 如果还有没有解析完的XMLStatementBuilder, 则继续解析
         if (!incompleteStatements.isEmpty()) {
             synchronized (incompleteStatements) {
                 // This always throws a BuilderException.
                 incompleteStatements.iterator().next().parseStatementNode();
             }
         }
+
+        // 判断是否还包含了没有解析晚的MethodResolver, 则接续解析
         if (!incompleteMethods.isEmpty()) {
             synchronized (incompleteMethods) {
                 // This always throws a BuilderException.

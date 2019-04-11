@@ -114,8 +114,10 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
-    // 清空本地缓存
+
+    // 清空本地缓存(这个地方也是清空一级缓存)
     clearLocalCache();
+
     // 执行更新操作
     return doUpdate(ms, parameter);
   }
@@ -146,9 +148,13 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+
+    // 这里是以及缓存, 一级缓存可以在节点处设置flushCache=true, 那么每次在
+    // 执行SQL的时候都会刷新缓存
     if (queryStack == 0 && ms.isFlushCacheRequired()) {
       clearLocalCache();
     }
+
     List<E> list;
     try {
       queryStack++;
@@ -165,8 +171,12 @@ public abstract class BaseExecutor implements Executor {
       for (DeferredLoad deferredLoad : deferredLoads) {
         deferredLoad.load();
       }
+
       // issue #601
       deferredLoads.clear();
+
+      // 如果localCacheScope设置为STATEMENT的时候, 在执行完查询之后, 会清理掉本地缓存.
+      // 如果缓存的范围为SESSION, 则会在同一个session中起作用
       if (configuration.getLocalCacheScope() == LocalCacheScope.STATEMENT) {
         // issue #482
         clearLocalCache();
@@ -207,18 +217,23 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+
+    // 创建cacheKey对象
     CacheKey cacheKey = new CacheKey();
     cacheKey.update(ms.getId());
     cacheKey.update(rowBounds.getOffset());
     cacheKey.update(rowBounds.getLimit());
     cacheKey.update(boundSql.getSql());
+
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     TypeHandlerRegistry typeHandlerRegistry = ms.getConfiguration().getTypeHandlerRegistry();
     // mimic DefaultParameterHandler logic
     for (ParameterMapping parameterMapping : parameterMappings) {
       if (parameterMapping.getMode() != ParameterMode.OUT) {
         Object value;
+        // 获取属性的名称
         String propertyName = parameterMapping.getProperty();
+        // 是否包含额额外的参数信息
         if (boundSql.hasAdditionalParameter(propertyName)) {
           value = boundSql.getAdditionalParameter(propertyName);
         } else if (parameterObject == null) {
@@ -232,6 +247,8 @@ public abstract class BaseExecutor implements Executor {
         cacheKey.update(value);
       }
     }
+
+    // 这里判断configuration是否已经设置了环境信息, 如果设置了, 则加入ID信息
     if (configuration.getEnvironment() != null) {
       // issue #176
       cacheKey.update(configuration.getEnvironment().getId());
@@ -279,7 +296,9 @@ public abstract class BaseExecutor implements Executor {
   }
 
   /**
-   * 这是一个钩子方法, 用于在不同的executor中有不同的实现
+   * 这是一个钩子方法, 用于在不同的executor中有不同的实现 <br/>
+   * 这是一个模板模式: 真正执行查询的地方。
+   *
    * @param ms 映射的SQL语句信息
    * @param parameter 参数信息
    * @return 更新的记录条数
@@ -346,6 +365,9 @@ public abstract class BaseExecutor implements Executor {
       localCache.removeObject(key);
     }
     localCache.putObject(key, list);
+
+    // 这里的使用是对于CALLABLE(存储过程而言), 如果是存储过程的时候
+    // 会将对应的参数缓存起来
     if (ms.getStatementType() == StatementType.CALLABLE) {
       localOutputParameterCache.putObject(key, parameter);
     }
@@ -361,6 +383,9 @@ public abstract class BaseExecutor implements Executor {
   protected Connection getConnection(Log statementLog) throws SQLException {
     // 从失误对象中获取数据库连接对象
     Connection connection = transaction.getConnection();
+
+    // 这里是一个特殊的封装: 如果日志的输出级别为DEBUG, 因此
+    // 采用对connection外面包一层, 然后对日志执行详细信息
     if (statementLog.isDebugEnabled()) {
       return ConnectionLogger.newInstance(connection, statementLog, queryStack);
     } else {

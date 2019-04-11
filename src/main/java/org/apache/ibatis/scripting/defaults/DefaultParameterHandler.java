@@ -33,6 +33,8 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * 默认的参数处理器
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -65,23 +67,36 @@ public class DefaultParameterHandler implements ParameterHandler {
   @Override
   public void setParameters(PreparedStatement ps) {
     ErrorContext.instance().activity("setting parameters").object(mappedStatement.getParameterMap().getId());
+    // 获取当前SQL所绑定的参数类表
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+
     if (parameterMappings != null) {
       for (int i = 0; i < parameterMappings.size(); i++) {
+        // 遍历参数映射信息
         ParameterMapping parameterMapping = parameterMappings.get(i);
+
+        // 这个是参数的模式, 对于一般sql而言, 当前的模式都是IN
         if (parameterMapping.getMode() != ParameterMode.OUT) {
           Object value;
+
           // 获取属性名称
           String propertyName = parameterMapping.getProperty();
-          // 判断是否包含了额外的参数信息
-          if (boundSql.hasAdditionalParameter(propertyName)) { // issue #448 ask first for additional params
-            value = boundSql.getAdditionalParameter(propertyName);
 
-          } else if (parameterObject == null) { // 判断参数是否为空
+          // 判断是否包含了额外的参数信息
+          // issue #448 ask first for additional params
+          if (boundSql.hasAdditionalParameter(propertyName)) {
+            value = boundSql.getAdditionalParameter(propertyName);
+          }
+          // 判断参数是否为空
+          else if (parameterObject == null) {
             value = null;
-          } else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) { // 是否包含了类型处理器
+          }
+          // 是否包含了类型处理器
+          else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) {
             value = parameterObject;
-          } else { // 如果没有配置类型处理器, 则特殊处理
+          }
+          // 如果没有配置类型处理器, 则特殊处理
+          else {
             MetaObject metaObject = configuration.newMetaObject(parameterObject);
             value = metaObject.getValue(propertyName);
           }

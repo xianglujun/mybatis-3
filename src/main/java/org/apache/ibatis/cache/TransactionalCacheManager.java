@@ -21,6 +21,8 @@ import java.util.Map;
 import org.apache.ibatis.cache.decorators.TransactionalCache;
 
 /**
+ * 事务缓存管理器
+ *
  * @author Clinton Begin
  */
 public class TransactionalCacheManager {
@@ -52,7 +54,9 @@ public class TransactionalCacheManager {
   }
 
   private TransactionalCache getTransactionalCache(Cache cache) {
+    // 判断缓存是否已经包含了对应的事务缓存
     TransactionalCache txCache = transactionalCaches.get(cache);
+    // 如果没有包含，则直接创建, 并放入到缓存之中
     if (txCache == null) {
       txCache = new TransactionalCache(cache);
       transactionalCaches.put(cache, txCache);

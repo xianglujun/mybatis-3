@@ -80,6 +80,13 @@ public abstract class BaseStatementHandler implements StatementHandler {
     return parameterHandler;
   }
 
+  /**
+   * 对sql进行预编译
+   * @param connection 链接对象
+   * @param transactionTimeout 事务执行超时时间
+   * @return
+   * @throws SQLException
+   */
   @Override
   public Statement prepare(Connection connection, Integer transactionTimeout) throws SQLException {
     ErrorContext.instance().sql(boundSql.getSql());
@@ -87,10 +94,13 @@ public abstract class BaseStatementHandler implements StatementHandler {
     try {
       // 初始化Statement对象, 并对sql进行预编译
       statement = instantiateStatement(connection);
+
       // 设置SQL语句执行超时时间
       setStatementTimeout(statement, transactionTimeout);
+
       // 设置fetchSize的属性
       setFetchSize(statement);
+
       return statement;
     } catch (SQLException e) {
       closeStatement(statement);
@@ -102,7 +112,7 @@ public abstract class BaseStatementHandler implements StatementHandler {
   }
 
   /**
-   * 初始化Statement对象
+   * 初始化Statement对象: 这也是一个模板方法, 具体实现交由子类去实现
    * @param connection 数据库连接对象
    * @return Statement对象
    * @throws SQLException 执行SQL异常
@@ -120,7 +130,9 @@ public abstract class BaseStatementHandler implements StatementHandler {
     // 判断MappedStatement中是否设置了超时时间
     if (mappedStatement.getTimeout() != null) {
       queryTimeout = mappedStatement.getTimeout();
-    } else if (configuration.getDefaultStatementTimeout() != null) { // 如果MappedStatement中没有设置超时时间, 则从Configuration中获取
+    }
+    // 如果MappedStatement中没有设置超时时间, 则从Configuration中获取
+    else if (configuration.getDefaultStatementTimeout() != null) {
       queryTimeout = configuration.getDefaultStatementTimeout();
     }
 

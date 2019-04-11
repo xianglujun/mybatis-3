@@ -46,7 +46,9 @@ public class SimpleExecutor extends BaseExecutor {
   public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
     Statement stmt = null;
     try {
+      // 获取全局配置对象
       Configuration configuration = ms.getConfiguration();
+
       // 通过configuration创建StatementHandler对象
       StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
       stmt = prepareStatement(handler, ms.getStatementLog());
@@ -84,15 +86,17 @@ public class SimpleExecutor extends BaseExecutor {
 
   /**
    *
-   * @param handler
-   * @param statementLog
-   * @return
+   * @param handler Sql语句处理器
+   * @param statementLog 日志对象
+   * @return {@link Statement} sql的表述对象, 其中包含了sql语句或者预编译等操作
    * @throws SQLException
    */
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
     Connection connection = getConnection(statementLog);
+    // 通过StatementHandler生成Statement对象, 并预编译sql信息
     stmt = handler.prepare(connection, transaction.getTimeout());
+    //
     handler.parameterize(stmt);
     return stmt;
   }

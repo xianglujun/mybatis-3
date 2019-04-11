@@ -23,13 +23,16 @@ import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
 
 /**
- * 永久的缓存，为MyBatis默认的缓存对象
+ * 永久的缓存，为MyBatis默认的缓存对象.
  * @author Clinton Begin
  */
 public class PerpetualCache implements Cache {
 
     private final String id;
 
+    /**
+     * 在缓存中, 实际上只是使用HashMap作为对象的缓存.
+     */
     private Map<Object, Object> cache = new HashMap<Object, Object>();
 
     public PerpetualCache(String id) {

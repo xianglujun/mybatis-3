@@ -323,6 +323,7 @@ public class DefaultSqlSession implements SqlSession {
    * @return object 封装之后的对象
    */
   private Object wrapCollection(final Object object) {
+    // 如果参数为一个集合, 则采用list作为参数的名称
     if (object instanceof Collection) {
       StrictMap<Object> map = new StrictMap<Object>();
       map.put("collection", object);
@@ -330,11 +331,15 @@ public class DefaultSqlSession implements SqlSession {
         map.put("list", object);
       }
       return map;
-    } else if (object != null && object.getClass().isArray()) {
+    }
+    // 如果参数是一个数组, 是采用array作为参数名称
+    else if (object != null && object.getClass().isArray()) {
       StrictMap<Object> map = new StrictMap<Object>();
       map.put("array", object);
       return map;
     }
+
+    // 否则不做处理
     return object;
   }
 

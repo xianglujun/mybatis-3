@@ -41,6 +41,12 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   private final Class<T> mapperInterface;
   private final Map<Method, MapperMethod> methodCache;
 
+  /**
+   * 创建MapperMethod对象
+   * @param sqlSession session对象
+   * @param mapperInterface 请求的接口类型
+   * @param methodCache 方法缓存对象
+   */
   public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethod> methodCache) {
     this.sqlSession = sqlSession;
     this.mapperInterface = mapperInterface;
@@ -53,24 +59,30 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
       // 判断当前对象是否是一个对象
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);
-      } else if (isDefaultMethod(method)) {// 这里判断了方法是否为接口的默认方法
+
+      }
+      // 这里判断了方法是否为接口的默认方法
+      else if (isDefaultMethod(method)) {
         return invokeDefaultMethod(proxy, method, args);
       }
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
     }
+
     final MapperMethod mapperMethod = cachedMapperMethod(method);
     // 执行Mapper方法
     return mapperMethod.execute(sqlSession, args);
   }
 
   /**
-   * 缓存Mapper的方法
+   * 缓存Mapper的执行方法
    * @param method 执行方法
    * @return
    */
   private MapperMethod cachedMapperMethod(Method method) {
+    // 查看缓存是否已经创建MapperMethod对象
     MapperMethod mapperMethod = methodCache.get(method);
+    // 在没有创建的时候, 直接创建MapperMethod并加入到缓存中
     if (mapperMethod == null) {
       mapperMethod = new MapperMethod(mapperInterface, method, sqlSession.getConfiguration());
       methodCache.put(method, mapperMethod);

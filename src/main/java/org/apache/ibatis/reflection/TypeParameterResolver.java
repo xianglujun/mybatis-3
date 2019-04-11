@@ -66,6 +66,13 @@ public class TypeParameterResolver {
         return result;
     }
 
+    /**
+     * 转换类型
+     * @param type 类型
+     * @param srcType 源类型
+     * @param declaringClass 方法声明类
+     * @return 类型对象
+     */
     private static Type resolveType(Type type, Type srcType, Class<?> declaringClass) {
         // 判断类型是否为形参
         if (type instanceof TypeVariable) {
@@ -148,9 +155,17 @@ public class TypeParameterResolver {
         return result;
     }
 
+    /**
+     * 解析TypeVariable对象
+     * @param typeVar 对象变量
+     * @param srcType 源类型
+     * @param declaringClass 声明的class类型对象
+     * @return 解析后的对象
+     */
     private static Type resolveTypeVar(TypeVariable<?> typeVar, Type srcType, Class<?> declaringClass) {
         Type result = null;
         Class<?> clazz = null;
+
         if (srcType instanceof Class) {
             clazz = (Class<?>) srcType;
         }
@@ -162,6 +177,7 @@ public class TypeParameterResolver {
             throw new IllegalArgumentException("The 2nd arg must be Class or ParameterizedType, but was: " + srcType.getClass());
         }
 
+        // 这里获取TypeVariable所代表的类型
         if (clazz == declaringClass) {
             Type[] bounds = typeVar.getBounds();
             if (bounds.length > 0) {
@@ -186,23 +202,45 @@ public class TypeParameterResolver {
         return Object.class;
     }
 
+    /**
+     * 扫描父类型
+     * @param typeVar 泛型类型变量
+     * @param srcType 原始类型
+     * @param declaringClass 声明方法的类型
+     * @param clazz 类型
+     * @param superclass 父类
+     * @return
+     */
     private static Type scanSuperTypes(TypeVariable<?> typeVar, Type srcType, Class<?> declaringClass, Class<?> clazz, Type superclass) {
         Type result = null;
+        // 如果父类是一个泛型化参数
         if (superclass instanceof ParameterizedType) {
             ParameterizedType parentAsType = (ParameterizedType) superclass;
+
+            // 获取泛型化类型代表的原始类型
             Class<?> parentAsClass = (Class<?>) parentAsType.getRawType();
             if (declaringClass == parentAsClass) {
+                // 获取实际的参数类型
                 Type[] typeArgs = parentAsType.getActualTypeArguments();
+                // 获取类型变量的定义
                 TypeVariable<?>[] declaredTypeVars = declaringClass.getTypeParameters();
+
                 for (int i = 0; i < declaredTypeVars.length; i++) {
                     if (declaredTypeVars[i] == typeVar) {
+
+                        // 如果是类型化参数
                         if (typeArgs[i] instanceof TypeVariable) {
+
                             TypeVariable<?>[] typeParams = clazz.getTypeParameters();
+
                             for (int j = 0; j < typeParams.length; j++) {
+
                                 if (typeParams[j] == typeArgs[i]) {
+
                                     if (srcType instanceof ParameterizedType) {
                                         result = ((ParameterizedType) srcType).getActualTypeArguments()[j];
                                     }
+
                                     break;
                                 }
                             }

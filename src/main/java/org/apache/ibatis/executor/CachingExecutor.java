@@ -78,13 +78,17 @@ public class CachingExecutor implements Executor {
   @Override
   public int update(MappedStatement ms, Object parameterObject) throws SQLException {
     flushCacheIfRequired(ms);
+    // 在缓存Executor中, 更新最终是委托给了其他的Executor执行
+    // 在CacheExecutor中只是对缓存做了一个处理
     return delegate.update(ms, parameterObject);
   }
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
     BoundSql boundSql = ms.getBoundSql(parameterObject);
+    // 创建缓存信息
     CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
+    // 执行查询并返回结果
     return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 
@@ -99,9 +103,13 @@ public class CachingExecutor implements Executor {
       throws SQLException {
     Cache cache = ms.getCache();
     if (cache != null) {
+      // 清空缓存
       flushCacheIfRequired(ms);
+
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
+
+        // 判断缓存中是否包含了存储结果信息
         @SuppressWarnings("unchecked")
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
@@ -146,6 +154,14 @@ public class CachingExecutor implements Executor {
     }
   }
 
+  /**
+   * 创建缓存key信息
+   * @param ms SQL语句映射关系
+   * @param parameterObject 参数对象
+   * @param rowBounds 绑定对象
+   * @param boundSql 绑定sql信息
+   * @return
+   */
   @Override
   public CacheKey createCacheKey(MappedStatement ms, Object parameterObject, RowBounds rowBounds, BoundSql boundSql) {
     return delegate.createCacheKey(ms, parameterObject, rowBounds, boundSql);
@@ -171,7 +187,10 @@ public class CachingExecutor implements Executor {
    * @param ms 映射语句对象
    */
   private void flushCacheIfRequired(MappedStatement ms) {
+    // 获取当前的MappedStatement中的Cache对象
     Cache cache = ms.getCache();
+    // 如果如果不为空, 并且需要清除缓存, 则清除缓存信息
+    // 这里主要是根据MappedStatement中的flushCache是否为true进行判断
     if (cache != null && ms.isFlushCacheRequired()) {      
       tcm.clear(cache);
     }
